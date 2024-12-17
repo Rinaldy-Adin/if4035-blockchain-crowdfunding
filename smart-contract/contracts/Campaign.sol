@@ -1,10 +1,6 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.28;
 
-// masih purely chatgpt
-// TODO: memahami
-// TODO: adjust milestone logic
-
 contract Campaign {
     address public manager;
     string public name;
@@ -91,7 +87,6 @@ contract Campaign {
         emit ContributionMade(msg.sender, msg.value);
     }
 
-    // TODO: fix so withdraw can be done per milestone
     function withdrawFunds(uint256 index) public restricted {
         require(index < milestones.length, "Invalid milestone index");
         Milestone storage milestone = milestones[index];

@@ -1,9 +1,6 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.28;
 
-// masih purely chatgpt
-// TODO: memahami
-
 import "./Campaign.sol";
 
 contract CampaignFactory {
