@@ -18,6 +18,7 @@ contract Campaign {
 
         uint256 achieved;
         bool verified;
+        bool withdrawn;
     }
 
     Milestone[] public milestones;
@@ -53,6 +54,7 @@ contract Campaign {
 
                 achieved: 0,
                 verified: false,
+                withdrawn: false,
             }));
         }
     }
@@ -90,9 +92,17 @@ contract Campaign {
     }
 
     // TODO: fix so withdraw can be done per milestone
-    function withdrawFunds() public restricted {
-        require(totalFunds >= goal, "Funding goal has not been met");
-        uint256 amount = address(this).balance;
+    function withdrawFunds(uint256 index) public restricted {
+        require(index < milestones.length, "Invalid milestone index");
+        Milestone storage milestone = milestones[index];
+        require(milestone.verified, "Milestone not yet verified");
+        require(!milestone.withdrawn, "Milestone already withdrawn");
+        require(milestone.achieved >= milestone.goal, "Milestone goal has not been met");
+
+        uint256 amount = milestone.goal;
+        require(address(this).balance >= amount, "Insufficient contract balance");
+
+        milestone.withdrawn = true;
         payable(manager).transfer(amount);
 
         emit FundsWithdrawn(amount, manager);
@@ -124,8 +134,9 @@ contract Campaign {
     function verifyMilestone(uint256 index) public restricted {
         require(index < milestones.length, "Invalid milestone index");
         Milestone storage milestone = milestones[index];
-        require(!milestone.verified, "Milestone already achieved");
-        require(milestone.achieved < milestone.goal, "Milestone goal has not been met");
+        require(!milestone.verified, "Milestone already verified");
+        require(!milestone.withdrawn, "Milestone already withdrawn");
+        require(milestone.achieved >= milestone.goal, "Milestone goal has not been met");
 
         milestone.verified = true;
 
