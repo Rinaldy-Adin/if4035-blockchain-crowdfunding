@@ -12,6 +12,8 @@ dist
 dist-ssr
 *.local
 src/abi
+!src/abi/contracts/Campaign.sol/Campaign.json
+!src/abi/contracts/CampaignFactory.sol/CampaignFactory.json
 
 # Editor directories and files
 .vscode/*
