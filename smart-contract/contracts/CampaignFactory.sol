@@ -6,15 +6,27 @@ import "./Campaign.sol";
 contract CampaignFactory {
     address[] public deployedCampaigns;
 
-    event CampaignCreated(address campaignAddress, address creator, uint256 goal);
+    event CampaignCreated(address campaignAddress, address creator, string name, string description);
 
-    function createCampaign(uint256 goal) public {
-        Campaign newCampaign = new Campaign(msg.sender, goal);
+    function createCampaign(
+        string memory _name,
+        string memory _description,
+        string[] memory milestoneNames,
+        string[] memory milestoneDescriptions,
+        uint256[] memory milestoneGoals
+    ) public {
+        require(
+            milestoneNames.length > 0 &&
+            milestoneNames.length == milestoneDescriptions.length &&
+            milestoneNames.length == milestoneGoals.length,
+            "Invalid milestones input"
+        );
+
+        Campaign newCampaign = new Campaign(msg.sender, _name, _description, milestoneNames, milestoneDescriptions, milestoneGoals);
         deployedCampaigns.push(address(newCampaign));
 
-        emit CampaignCreated(address(newCampaign), msg.sender, goal);
+        emit CampaignCreated(address(newCampaign), msg.sender, _name, _description);
     }
-
     function getDeployedCampaigns() public view returns (address[] memory) {
         return deployedCampaigns;
     }

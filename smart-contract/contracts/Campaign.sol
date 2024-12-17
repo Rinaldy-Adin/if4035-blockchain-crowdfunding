@@ -24,6 +24,7 @@ contract Campaign {
     event ContributionMade(address indexed backer, uint256 amount);
     event MilestoneUpdated(uint256 milestoneIndex, uint256 achievedAmount);
     event MilestoneVerified(uint256 milestoneIndex, string milestoneName);
+    event FundsWithdrawn(address manager, uint256 amount);
 
     modifier restricted() {
         require(msg.sender == manager, "Only the manager can perform this action");
@@ -34,23 +35,30 @@ contract Campaign {
         address creator,
         string memory _name,
         string memory _description,
-        Milestone[] calldata campaignMilestones
+        string[] memory milestoneNames,
+        string[] memory milestoneDescriptions,
+        uint256[] memory milestoneGoals
     ) {
-        require(campaignMilestones.length > 0, "At least one milestone is required");
+        require(
+            milestoneNames.length > 0 &&
+            milestoneNames.length == milestoneDescriptions.length &&
+            milestoneNames.length == milestoneGoals.length,
+            "Invalid milestones input"
+        );
 
         manager = creator;
         name = _name;
         description = _description;
 
-        for (uint256 i = 0; i < campaignMilestones.length; i++) {
+        for (uint256 i = 0; i < milestoneNames.length; i++) {
             milestones.push(Milestone({
-                name: campaignMilestones[i].name,
-                description: campaignMilestones[i].description,
-                goal: campaignMilestones[i].goal,
+                name: milestoneNames[i],
+                description: milestoneDescriptions[i],
+                goal: milestoneGoals[i],
 
                 achieved: 0,
                 verified: false,
-                withdrawn: false,
+                withdrawn: false
             }));
         }
     }
@@ -100,7 +108,7 @@ contract Campaign {
         milestone.withdrawn = true;
         payable(manager).transfer(amount);
 
-        emit FundsWithdrawn(amount, manager);
+        emit FundsWithdrawn(manager, amount);
     }
 
     function getCampaignSummary() public view returns (
@@ -108,12 +116,10 @@ contract Campaign {
         uint256,
         uint256,
         uint256,
-        uint256,
         uint256
     ) {
         return (
             manager,
-            goal,
             totalFunds,
             address(this).balance,
             backers.length,
