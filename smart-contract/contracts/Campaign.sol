@@ -7,14 +7,17 @@ pragma solidity ^0.8.28;
 
 contract Campaign {
     address public manager;
-    uint256 public goal;
+    string public name;
+    string public description;
     uint256 public totalFunds;
 
     struct Milestone {
         string name;
         string description;
         uint256 goal;
-        bool achieved;
+
+        uint256 achieved;
+        bool verified;
     }
 
     Milestone[] public milestones;
@@ -22,18 +25,36 @@ contract Campaign {
     address[] public backers;
 
     event ContributionMade(address indexed backer, uint256 amount);
-    event FundsWithdrawn(uint256 amount, address recipient);
-    event MilestoneAdded(uint256 milestoneIndex, string name, string description, uint256 goal);
-    event MilestoneAchieved(uint256 milestoneIndex, string name);
+    event MilestoneUpdated(uint256 milestoneIndex, uint256 achievedAmount);
+    event MilestoneVerified(uint256 milestoneIndex, string milestoneName);
 
     modifier restricted() {
         require(msg.sender == manager, "Only the manager can perform this action");
         _;
     }
 
-    constructor(address creator, uint256 campaignGoal) {
+    constructor(
+        address creator,
+        string memory _name,
+        string memory _description,
+        Milestone[] calldata campaignMilestones
+    ) {
+        require(campaignMilestones.length > 0, "At least one milestone is required");
+
         manager = creator;
-        goal = campaignGoal;
+        name = _name;
+        description = _description;
+
+        for (uint256 i = 0; i < campaignMilestones.length; i++) {
+            milestones.push(Milestone({
+                name: campaignMilestones[i].name,
+                description: campaignMilestones[i].description,
+                goal: campaignMilestones[i].goal,
+
+                achieved: 0,
+                verified: false,
+            }));
+        }
     }
 
     function contribute() public payable {
@@ -42,14 +63,33 @@ contract Campaign {
         if (contributions[msg.sender] == 0) {
             backers.push(msg.sender);
         }
-
         contributions[msg.sender] += msg.value;
         totalFunds += msg.value;
+
+        uint256 remainingContribution = msg.value;
+
+        for (uint256 i = 0; i < milestones.length && remainingContribution > 0; i++) {
+            Milestone storage milestone = milestones[i];
+
+            if (milestone.achieved < milestone.goal) {
+                uint256 remainingGoal = milestone.goal - milestone.achieved;
+
+                if (remainingContribution <= remainingGoal) {
+                    milestone.achieved += remainingContribution;
+                    remainingContribution = 0;
+                } else {
+                    milestone.achieved += remainingGoal;
+                    remainingContribution -= remainingGoal;
+                }
+
+                emit MilestoneUpdated(i, milestone.achieved);
+            }
+        }
 
         emit ContributionMade(msg.sender, msg.value);
     }
 
-    // TODO: fix so withdraw can be done per balance
+    // TODO: fix so withdraw can be done per milestone
     function withdrawFunds() public restricted {
         require(totalFunds >= goal, "Funding goal has not been met");
         uint256 amount = address(this).balance;
@@ -76,33 +116,19 @@ contract Campaign {
         );
     }
 
-    // TODO: add milestone logic to constructor 
-    function addMilestone(string memory name, string memory description, uint256 milestoneGoal) public restricted {
-        require(milestoneGoal > 0, "Milestone goal must be greater than 0");
-
-        milestones.push(Milestone({
-            name: name,
-            description: description,
-            goal: milestoneGoal,
-            achieved: false
-        }));
-
-        emit MilestoneAdded(milestones.length - 1, name, description, milestoneGoal);
+    function getMilestones() public view returns (Milestone[] memory) {
+        return milestones;
     }
 
     // TODO: adjust to use oracle @rachel
-    function achieveMilestone(uint256 index) public restricted {
+    function verifyMilestone(uint256 index) public restricted {
         require(index < milestones.length, "Invalid milestone index");
         Milestone storage milestone = milestones[index];
-        require(!milestone.achieved, "Milestone already achieved");
-        require(totalFunds >= milestone.goal, "Milestone goal has not been met");
+        require(!milestone.verified, "Milestone already achieved");
+        require(milestone.achieved < milestone.goal, "Milestone goal has not been met");
 
-        milestone.achieved = true;
+        milestone.verified = true;
 
-        emit MilestoneAchieved(index, milestone.name);
-    }
-
-    function getMilestones() public view returns (Milestone[] memory) {
-        return milestones;
+        emit MilestoneVerified(index, milestone.name);
     }
 }
