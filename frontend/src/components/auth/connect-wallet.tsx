@@ -1,8 +1,8 @@
-import { useAuthContext } from '../context/auth-context.tsx';
+import { useAuthContext } from '../../context/auth-context.tsx';
 
 import { Button } from '@/components/ui/button.tsx';
 
-export default function Profile() {
+export default function ConnectWallet() {
   const { userAcc, mmLogin } = useAuthContext();
 
   return (
