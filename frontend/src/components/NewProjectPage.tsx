@@ -1,35 +1,51 @@
 import { useFieldArray, useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from './ui/form.tsx';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from './ui/form.tsx';
 import { Input } from './ui/input.tsx';
 import { Button } from './ui/button.tsx';
 import { Textarea } from './ui/textarea.tsx';
 import CurrencyInput from 'react-currency-input-field';
 import { cn } from '@/lib/utils.ts';
 import { useAuthContext } from '@/context/auth-context.tsx';
-import { createCampaign, getDeployedCampaigns } from '@/eth/campaignFactory.ts';
+import { createProject, getDeployedProjects } from '@/eth/campaignFactory.ts';
 
 const MS_DECIMAL_LIMIT = 6;
 
 const newProjectFormSchema = z.object({
   name: z.string().min(2, {
-    message: "The project name should at least be 2 characters.",
+    message: 'The project name should at least be 2 characters.',
   }),
   description: z.string(),
-  milestones: z.array(z.object({
-    name: z.string().min(2, {
-      message: "The milestone name should at least be 2 characters.",
-    }),
-    description: z.string(),
-    goal: z.string().refine((value) => {
-      const parsedValue = parseFloat(value);
-      return !isNaN(parsedValue) && parsedValue > (10 ** (-1 * MS_DECIMAL_LIMIT));
-    }, {
-      message: `The milestone goal must be a number greater than ${10 ** (-1 * MS_DECIMAL_LIMIT)}`,
-    }),
-  })).min(1, { message: "The project should have at least 1 milestone" }),
-})
+  milestones: z
+    .array(
+      z.object({
+        name: z.string().min(2, {
+          message: 'The milestone name should at least be 2 characters.',
+        }),
+        description: z.string(),
+        goal: z.string().refine(
+          (value) => {
+            const parsedValue = parseFloat(value);
+            return (
+              !isNaN(parsedValue) && parsedValue > 10 ** (-1 * MS_DECIMAL_LIMIT)
+            );
+          },
+          {
+            message: `The milestone goal must be a number greater than ${10 ** (-1 * MS_DECIMAL_LIMIT)}`,
+          }
+        ),
+      })
+    )
+    .min(1, { message: 'The project should have at least 1 milestone' }),
+});
 
 type newProjectFormType = z.infer<typeof newProjectFormSchema>;
 
@@ -41,35 +57,49 @@ export default function NewProjectPage() {
     defaultValues: {
       name: '',
       description: '',
-    }
-  })
+    },
+  });
 
-  const { fields: milestoneFields, append: appendMilestone, remove: removeMilestone } = useFieldArray({
-    name: "milestones",
+  const {
+    fields: milestoneFields,
+    append: appendMilestone,
+    remove: removeMilestone,
+  } = useFieldArray({
+    name: 'milestones',
     control: form.control,
   });
 
   async function onSubmit(values: newProjectFormType) {
     if (web3 && userAcc) {
       const milestoneNames = values.milestones.map(({ name }) => name);
-      const milestoneDescriptions = values.milestones.map(({ description }) => description);
+      const milestoneDescriptions = values.milestones.map(
+        ({ description }) => description
+      );
       const milestoneGoals = values.milestones.map(({ goal }) => {
-        return web3.utils.toWei(goal, "ether");
+        return web3.utils.toWei(goal, 'ether');
       });
 
-      await createCampaign(web3, userAcc, values.name, values.description, milestoneNames, milestoneDescriptions, milestoneGoals);
+      await createProject(
+        web3,
+        userAcc,
+        values.name,
+        values.description,
+        milestoneNames,
+        milestoneDescriptions,
+        milestoneGoals
+      );
     }
   }
 
   async function onButtonTestClick() {
     if (web3) {
-      const campaignAdresses = await getDeployedCampaigns(web3);
+      const campaignAdresses = await getDeployedProjects(web3);
       console.log(campaignAdresses);
     }
   }
 
   return (
-    <div className='text-left'>
+    <div className="text-left">
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
           <FormField
@@ -79,7 +109,10 @@ export default function NewProjectPage() {
               <FormItem>
                 <FormLabel>Project Name</FormLabel>
                 <FormControl>
-                  <Input placeholder="Enter your project name here" {...field} />
+                  <Input
+                    placeholder="Enter your project name here"
+                    {...field}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -92,27 +125,41 @@ export default function NewProjectPage() {
               <FormItem>
                 <FormLabel>Project Name</FormLabel>
                 <FormControl>
-                  <Textarea placeholder="Enter your project description here" {...field} />
+                  <Textarea
+                    placeholder="Enter your project description here"
+                    {...field}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
             )}
           />
           <div>
-            <div className='flex justify-between'>
-              <p className={cn("font-semibold", form.formState.errors.milestones && "text-destructive")}>Milestones</p>
-              <Button type='button' onClick={() => {
-                appendMilestone({ name: '', goal: '', description: '' })
-              }}>
+            <div className="flex justify-between">
+              <p
+                className={cn(
+                  'font-semibold',
+                  form.formState.errors.milestones && 'text-destructive'
+                )}
+              >
+                Milestones
+              </p>
+              <Button
+                type="button"
+                onClick={() => {
+                  appendMilestone({ name: '', goal: '', description: '' });
+                }}
+              >
                 New Milestone
               </Button>
             </div>
             {form.formState.errors.milestones && (
-              <p className="text-[0.8rem] font-medium text-destructive" >
+              <p className="text-[0.8rem] font-medium text-destructive">
                 {form.formState.errors.milestones.message}
-              </p>)}
+              </p>
+            )}
 
-            <div className='space-y-6'>
+            <div className="space-y-6">
               {milestoneFields.map((field, index) => {
                 return (
                   <div key={field.id}>
@@ -123,7 +170,10 @@ export default function NewProjectPage() {
                         <FormItem>
                           <FormLabel>Milestone Name</FormLabel>
                           <FormControl>
-                            <Input placeholder="Enter your milestone name here" {...field} />
+                            <Input
+                              placeholder="Enter your milestone name here"
+                              {...field}
+                            />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -136,7 +186,10 @@ export default function NewProjectPage() {
                         <FormItem>
                           <FormLabel>Milestone Description</FormLabel>
                           <FormControl>
-                            <Textarea placeholder="Enter your milestone desctription here" {...field} />
+                            <Textarea
+                              placeholder="Enter your milestone desctription here"
+                              {...field}
+                            />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -149,8 +202,8 @@ export default function NewProjectPage() {
                         <FormItem>
                           <FormLabel>Milestone Goal</FormLabel>
                           <FormControl>
-                            <div className='flex items-center gap-3'>
-                              <p className='font-semibold'>ETH</p>
+                            <div className="flex items-center gap-3">
+                              <p className="font-semibold">ETH</p>
                               <CurrencyInput
                                 className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
                                 placeholder="Enter your milestone goal here"
@@ -166,7 +219,13 @@ export default function NewProjectPage() {
                         </FormItem>
                       )}
                     />
-                    <Button type='button' className='mt-4' onClick={() => removeMilestone(index)}>Remove Milestone</Button>
+                    <Button
+                      type="button"
+                      className="mt-4"
+                      onClick={() => removeMilestone(index)}
+                    >
+                      Remove Milestone
+                    </Button>
                   </div>
                 );
               })}
@@ -175,7 +234,9 @@ export default function NewProjectPage() {
           <Button type="submit">Submit</Button>
         </form>
       </Form>
-      <Button type="button" onClick={onButtonTestClick}>Test</Button>
-    </div >
+      <Button type="button" onClick={onButtonTestClick}>
+        Test
+      </Button>
+    </div>
   );
 }

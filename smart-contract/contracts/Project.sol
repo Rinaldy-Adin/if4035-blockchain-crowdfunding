@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.28;
 
-contract Campaign {
+contract Project {
     address public manager;
     string public name;
     string public description;
@@ -114,7 +114,7 @@ contract Campaign {
         emit FundsWithdrawn(manager, amount);
     }
 
-    function getCampaignSummary() public view returns (
+    function getProjectSummary() public view returns (
         address,
         uint256,
         uint256,

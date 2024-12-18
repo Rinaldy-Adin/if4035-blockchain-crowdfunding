@@ -52,23 +52,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
 
   // Fetch connected account on load
   useEffect(() => {
-    const fetchAccounts = async () => {
-      if (!window?.ethereum) return;
-
-      try {
-        const accounts: string[] = await window.ethereum.request({
-          method: 'eth_accounts',
-        });
-
-        if (accounts.length > 0) {
-          setAddress(accounts[0]);
-        }
-      } catch (error) {
-        console.error('Failed to fetch accounts:', error);
-      }
-    };
-
-    fetchAccounts();
+    connectWallet();
   }, []);
 
   // Handle account changes
@@ -77,7 +61,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
 
     const handleAccountsChanged = (accounts: string[]) => {
       if (accounts.length === 0) {
-        setAddress(null); // No accounts connected
+        setAddress(null);
       } else {
         setAddress(accounts[0]);
       }
@@ -100,7 +84,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   const contextValue: AuthContextType = {
     userAcc: address,
     mmLogin: connectWallet,
-    web3
+    web3,
   };
 
   return (
