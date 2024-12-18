@@ -5,10 +5,12 @@ import {
   useContext,
   ReactNode,
 } from 'react';
+import { Web3 } from 'web3';
 
 interface AuthContextType {
   userAcc: string | null;
   mmLogin: () => Promise<void>;
+  web3: Web3 | null;
 }
 
 export const AuthContext = createContext<AuthContextType | null>(null);
@@ -25,6 +27,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   children,
 }) => {
   const [address, setAddress] = useState<string | null>(null);
+  const [web3, setWeb3] = useState<Web3 | null>(null);
 
   const connectWallet = async () => {
     if (!window?.ethereum) {
@@ -87,9 +90,17 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     };
   }, []);
 
+  useEffect(() => {
+    if (address) {
+      const web3 = new Web3(window.ethereum);
+      setWeb3(web3);
+    }
+  }, [address]);
+
   const contextValue: AuthContextType = {
     userAcc: address,
     mmLogin: connectWallet,
+    web3
   };
 
   return (
