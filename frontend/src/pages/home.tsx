@@ -4,7 +4,7 @@ import { ProjectCard } from '@/components/projects/project-card.tsx';
 import { Input } from '@/components/ui/input.tsx';
 
 export const Home = () => {
-  const projects: Project[] = [
+  const staticProjects: Project[] = [
     {
       name: 'Project 1',
       description: 'This is project 1',
@@ -40,6 +40,7 @@ export const Home = () => {
       totalFund: 1500,
     },
   ];
+
   return (
     <Layout>
       {/* Title Section */}
@@ -56,7 +57,7 @@ export const Home = () => {
 
       {/* Grid of Projects */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 p-4">
-        {projects.map((project, id) => (
+        {staticProjects.map((project, id) => (
           <ProjectCard key={id} project={project} />
         ))}
       </div>

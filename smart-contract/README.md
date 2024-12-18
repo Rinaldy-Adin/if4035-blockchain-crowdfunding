@@ -1,13 +1,18 @@
 # How to run
 
-1. Compile smart contract ABI files (will be created in `/frontend/abi` as ABI files only needed by frontend (and
-   oracle))
+1. Compile smart contract ABI files
 
 ```
 npx hardhat compile
 ```
 
-2. Run FE client with `npm run dev` in `frontend` directory
+2. To create ABI files in `/frontend/abi` as it's needed by frontend
+
+```
+npm run export:abi
+```
+
+3. Run FE client with `npm run dev` in `frontend` directory
 
 3. Run hardhat node (node is reset after every run)
 
