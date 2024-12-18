@@ -46,6 +46,9 @@ contract Campaign {
             "Invalid milestones input"
         );
 
+        for (uint256 i = 0; i < milestoneNames.length; i++) {
+            require(milestoneGoals[i] > 0, "Milestone goals must be greater than 0");
+        }
         manager = creator;
         name = _name;
         description = _description;

@@ -7,6 +7,8 @@ import { Button } from './ui/button.tsx';
 import { Textarea } from './ui/textarea.tsx';
 import CurrencyInput from 'react-currency-input-field';
 import { cn } from '@/lib/utils.ts';
+import { useAuthContext } from '@/context/auth-context.tsx';
+import { createCampaign, getDeployedCampaigns } from '@/eth/campaignFactory.ts';
 
 const MS_DECIMAL_LIMIT = 6;
 
@@ -20,11 +22,11 @@ const newProjectFormSchema = z.object({
       message: "The milestone name should at least be 2 characters.",
     }),
     description: z.string(),
-    target: z.string().refine((value) => {
+    goal: z.string().refine((value) => {
       const parsedValue = parseFloat(value);
       return !isNaN(parsedValue) && parsedValue > (10 ** (-1 * MS_DECIMAL_LIMIT));
     }, {
-      message: `The milestone target must be a number greater than ${10 ** (-1 * MS_DECIMAL_LIMIT)}`,
+      message: `The milestone goal must be a number greater than ${10 ** (-1 * MS_DECIMAL_LIMIT)}`,
     }),
   })).min(1, { message: "The project should have at least 1 milestone" }),
 })
@@ -32,6 +34,8 @@ const newProjectFormSchema = z.object({
 type newProjectFormType = z.infer<typeof newProjectFormSchema>;
 
 export default function NewProjectPage() {
+  const { web3, userAcc } = useAuthContext();
+
   const form = useForm<newProjectFormType>({
     resolver: zodResolver(newProjectFormSchema),
     defaultValues: {
@@ -45,8 +49,23 @@ export default function NewProjectPage() {
     control: form.control,
   });
 
-  function onSubmit(values: newProjectFormType) {
-    console.log(values)
+  async function onSubmit(values: newProjectFormType) {
+    if (web3 && userAcc) {
+      const milestoneNames = values.milestones.map(({ name }) => name);
+      const milestoneDescriptions = values.milestones.map(({ description }) => description);
+      const milestoneGoals = values.milestones.map(({ goal }) => {
+        return web3.utils.toWei(goal, "ether");
+      });
+
+      await createCampaign(web3, userAcc, values.name, values.description, milestoneNames, milestoneDescriptions, milestoneGoals);
+    }
+  }
+
+  async function onButtonTestClick() {
+    if (web3) {
+      const campaignAdresses = await getDeployedCampaigns(web3);
+      console.log(campaignAdresses);
+    }
   }
 
   return (
@@ -83,7 +102,7 @@ export default function NewProjectPage() {
             <div className='flex justify-between'>
               <p className={cn("font-semibold", form.formState.errors.milestones && "text-destructive")}>Milestones</p>
               <Button type='button' onClick={() => {
-                appendMilestone({ name: '', target: '', description: '' })
+                appendMilestone({ name: '', goal: '', description: '' })
               }}>
                 New Milestone
               </Button>
@@ -125,16 +144,16 @@ export default function NewProjectPage() {
                     />
                     <FormField
                       control={form.control}
-                      name={`milestones.${index}.target`}
+                      name={`milestones.${index}.goal`}
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Milestone target</FormLabel>
+                          <FormLabel>Milestone Goal</FormLabel>
                           <FormControl>
                             <div className='flex items-center gap-3'>
                               <p className='font-semibold'>ETH</p>
                               <CurrencyInput
                                 className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
-                                placeholder="Enter your milestone target here"
+                                placeholder="Enter your milestone goal here"
                                 decimalsLimit={MS_DECIMAL_LIMIT}
                                 value={field.value}
                                 onValueChange={(value) => {
@@ -156,6 +175,7 @@ export default function NewProjectPage() {
           <Button type="submit">Submit</Button>
         </form>
       </Form>
+      <Button type="button" onClick={onButtonTestClick}>Test</Button>
     </div >
   );
 }
