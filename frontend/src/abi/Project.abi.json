@@ -219,9 +219,9 @@
     "name": "getProjectSummary",
     "outputs": [
       {
-        "internalType": "address",
+        "internalType": "string",
         "name": "",
-        "type": "address"
+        "type": "string"
       },
       {
         "internalType": "uint256",

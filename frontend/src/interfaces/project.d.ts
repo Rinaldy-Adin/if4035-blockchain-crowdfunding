@@ -10,3 +10,13 @@ export interface Project {
   milestones: Milestone[];
   totalFund: number;
 }
+
+export type ProjectSummary = {
+  projectAddress: string;
+  name: string;
+  totalFunds: number;
+  totalGoals: number;
+  backersCount: number;
+  milestonesCount: number;
+};
+

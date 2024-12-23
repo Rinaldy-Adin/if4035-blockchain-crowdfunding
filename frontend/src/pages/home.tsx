@@ -1,45 +1,47 @@
-import { Layout } from '@/layouts/layout.tsx';
-import { Project } from '@/interfaces/project';
-import { ProjectCard } from '@/components/projects/project-card.tsx';
-import { Input } from '@/components/ui/input.tsx';
+import {Layout} from '@/layouts/layout.tsx';
+import {ProjectSummary} from '@/interfaces/project';
+import {ProjectCard} from '@/components/projects/project-card.tsx';
+import {Input} from '@/components/ui/input.tsx';
+import {useAuthContext} from "@/context/auth-context.tsx";
+import {useEffect, useState} from "react";
+import {getDeployedProjects} from "@/eth/campaignFactory.ts";
 
 export const Home = () => {
-  const staticProjects: Project[] = [
-    {
-      name: 'Project 1',
-      description: 'This is project 1',
-      milestones: [
-        {
-          name: 'Milestone 1',
-          description: 'This is milestone 1',
-          target: 1000,
-        },
-        {
-          name: 'Milestone 2',
-          description: 'This is milestone 2',
-          target: 2000,
-        },
-      ],
-      totalFund: 500,
-    },
-    {
-      name: 'Project 2',
-      description: 'This is project 2',
-      milestones: [
-        {
-          name: 'Milestone 1',
-          description: 'This is milestone 1',
-          target: 1000,
-        },
-        {
-          name: 'Milestone 2',
-          description: 'This is milestone 2',
-          target: 2000,
-        },
-      ],
-      totalFund: 1500,
-    },
-  ];
+  const {web3} = useAuthContext();
+  const [projects, setProjects] = useState<ProjectSummary[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const fetchProjects = async () => {
+      try {
+        if (web3) {
+          const projectSummaries = await getDeployedProjects(web3);
+
+          if (isMounted) {
+            setProjects(projectSummaries);
+            setLoading(false);
+          }
+        }
+      } catch (error) {
+        if (isMounted) {
+          console.error("Error fetching projects:", error);
+          setLoading(false);
+        }
+      }
+    };
+
+    fetchProjects();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [web3]);
+
+  if (loading) {
+    return <p>Loading projects...</p>;
+  }
 
   return (
     <Layout>
@@ -57,8 +59,8 @@ export const Home = () => {
 
       {/* Grid of Projects */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 p-4">
-        {staticProjects.map((project, id) => (
-          <ProjectCard key={id} project={project} />
+        {projects.map((project, id) => (
+          <ProjectCard key={id} project={project}/>
         ))}
       </div>
     </Layout>
