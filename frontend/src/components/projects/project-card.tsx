@@ -1,12 +1,8 @@
 import { Card } from '@/components/ui/card.tsx';
-import { Project } from '@/interfaces/project';
+import { ProjectSummary } from '@/interfaces/project';
 import { Progress } from '@/components/ui/progress.tsx';
-import { formatRupiah } from '@/utils/currency.ts';
 
-export const ProjectCard = ({ project }: { project: Project }) => {
-  const totalGoal = project.milestones.reduce((acc, milestone) => {
-    return acc + milestone.target;
-  }, 0);
+export const ProjectCard = ({ project }: { project: ProjectSummary }) => {
   return (
     <Card className="w-full overflow-hidden rounded-xl shadow-md">
       {/* Image Container with Progress Bar Overlay */}
@@ -18,7 +14,7 @@ export const ProjectCard = ({ project }: { project: Project }) => {
         />
         {/* Progress Bar Overlay */}
         <Progress
-          value={(project.totalFund / totalGoal) * 100}
+          value={(project.totalFunds / project.totalGoals) * 100}
           className="absolute bottom-0 left-0 w-full"
         />
       </div>
@@ -27,10 +23,10 @@ export const ProjectCard = ({ project }: { project: Project }) => {
       <div className="flex flex-col p-4">
         <h3 className="font-bold text-lg mb-1">{project.name}</h3>
         <p className="line-clamp-2 text-gray-600 text-sm mb-2">
-          {project.description}
+          {project.backersCount} contributor(s)
         </p>
         <p className="text-sm text-gray-800 font-medium">
-          {formatRupiah(project.totalFund)} out of {formatRupiah(totalGoal)}
+          {project.totalFunds} out of {project.totalGoals}
         </p>
       </div>
     </Card>

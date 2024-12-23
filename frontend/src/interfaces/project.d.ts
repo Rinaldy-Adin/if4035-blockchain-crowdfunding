@@ -1,7 +1,10 @@
 export interface Milestone {
   name: string;
   description: string;
-  target: number;
+  goal: number;
+  achieved: number;
+  verified: boolean;
+  withdrawn: boolean;
 }
 
 export interface Project {
@@ -10,3 +13,12 @@ export interface Project {
   milestones: Milestone[];
   totalFund: number;
 }
+
+export type ProjectSummary = {
+  projectAddress: string;
+  name: string;
+  totalFunds: number;
+  totalGoals: number;
+  backersCount: number;
+  milestonesCount: number;
+};

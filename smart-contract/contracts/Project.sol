@@ -115,16 +115,20 @@ contract Project {
     }
 
     function getProjectSummary() public view returns (
-        address,
+        string memory,
         uint256,
         uint256,
         uint256,
         uint256
     ) {
+        uint256 totalGoals = 0;
+        for (uint256 j = 0; j < milestones.length; j++) {
+            totalGoals += milestones[j].goal;
+        }
         return (
-            manager,
+            name,
             totalFunds,
-            address(this).balance,
+            totalGoals,
             backers.length,
             milestones.length
         );
