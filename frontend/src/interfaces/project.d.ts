@@ -22,4 +22,3 @@ export type ProjectSummary = {
   backersCount: number;
   milestonesCount: number;
 };
-

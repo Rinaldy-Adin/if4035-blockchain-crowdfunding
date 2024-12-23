@@ -1,8 +1,8 @@
 import Web3 from 'web3';
 import ProjectKickstarterApp from '../abi/ProjectFactory.abi.json';
 import ProjectABI from '../abi/Project.abi.json';
-import {ProjectSummary} from "@/interfaces/project";
-import {getProjectSummary} from "@/eth/campaign.ts";
+import { ProjectSummary } from '@/interfaces/project';
+import { getProjectSummary } from '@/eth/campaign.ts';
 
 const FACTORY_ADDRESS = '0x5FbDB2315678afecb367f032d93F642f64180aa3';
 
@@ -10,7 +10,7 @@ export function getProjectFactoryContract(web3: Web3) {
   try {
     return new web3.eth.Contract(ProjectKickstarterApp, FACTORY_ADDRESS);
   } catch (error) {
-    console.error("Error creating contract instance:", error);
+    console.error('Error creating contract instance:', error);
     throw error;
   }
 }
@@ -27,7 +27,7 @@ export async function createProject(
   try {
     const projectFactory = getProjectFactoryContract(web3);
 
-    console.log({fromAddress, milestoneGoals});
+    console.log({ fromAddress, milestoneGoals });
     const receipt = await projectFactory.methods
       .createProject(
         projectName,
@@ -48,21 +48,24 @@ export async function createProject(
   }
 }
 
-export async function getDeployedProjects(web3: Web3): Promise<ProjectSummary[]> {
+export async function getDeployedProjects(
+  web3: Web3
+): Promise<ProjectSummary[]> {
   try {
     const projectFactory = getProjectFactoryContract(web3);
-    const projectAddresses: string[] = await projectFactory.methods.getDeployedProjects().call();
-    console.log("Project Addresses:", projectAddresses);
-
+    const projectAddresses: string[] = await projectFactory.methods
+      .getDeployedProjects()
+      .call();
+    console.log('Project Addresses:', projectAddresses);
 
     const projectSummaries: ProjectSummary[] = await Promise.all(
       projectAddresses.map(async (address): Promise<ProjectSummary> => {
-        console.log(web3.eth)
-        return getProjectSummary(web3, address)
+        console.log(web3.eth);
+        return getProjectSummary(web3, address);
       })
     );
 
-    console.log("Projects Summaries:", projectSummaries);
+    console.log('Projects Summaries:', projectSummaries);
     return projectSummaries;
   } catch (error) {
     console.error('Error fetching deployed projects:', error);

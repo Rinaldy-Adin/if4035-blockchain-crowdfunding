@@ -1,17 +1,17 @@
-import {Layout} from '@/layouts/layout.tsx';
-import {Project} from '@/interfaces/project';
-import {useAuthContext} from "@/context/auth-context.tsx";
-import {useEffect, useState} from "react";
-import {getProjectDetail} from "@/eth/campaign.ts";
-import {useParams} from "react-router-dom";
-import {Progress} from "@/components/ui/progress.tsx";
-import {Button} from "@/components/ui/button.tsx";
+import { Layout } from '@/layouts/layout.tsx';
+import { Project } from '@/interfaces/project';
+import { useAuthContext } from '@/context/auth-context.tsx';
+import { useEffect, useState } from 'react';
+import { getProjectDetail } from '@/eth/campaign.ts';
+import { useParams } from 'react-router-dom';
+import { Progress } from '@/components/ui/progress.tsx';
+import { Button } from '@/components/ui/button.tsx';
 
 export const ProjectDetail = () => {
-  const {web3} = useAuthContext();
-  const {address} = useParams();
+  const { web3 } = useAuthContext();
+  const { address } = useParams();
   const [project, setProject] = useState<Project>();
-  const [totalGoal, setTotalGoal] = useState(0)
+  const [totalGoal, setTotalGoal] = useState(0);
   const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
@@ -24,13 +24,18 @@ export const ProjectDetail = () => {
 
           if (isMounted) {
             setProject(projectDetail);
-            setTotalGoal(projectDetail.milestones.reduce((acc, milestone) => acc + milestone.goal, 0))
+            setTotalGoal(
+              projectDetail.milestones.reduce(
+                (acc, milestone) => acc + milestone.goal,
+                0
+              )
+            );
             setLoading(false);
           }
         }
       } catch (error) {
         if (isMounted) {
-          console.error("Error fetching project:", error);
+          console.error('Error fetching project:', error);
           setLoading(false);
         }
       }
@@ -57,7 +62,7 @@ export const ProjectDetail = () => {
         </div>
       </div>
 
-      <div className={"flex flex-col md:flex-row gap-8"}>
+      <div className={'flex flex-col md:flex-row gap-8'}>
         <div className="w-full space-y-4">
           <div className="relative h-[480px]">
             <img
@@ -74,9 +79,10 @@ export const ProjectDetail = () => {
           {/* Funds vs Goals */}
           <div className="text-center">
             <p className="text-lg">
-              <span className="font-semibold text-green-600">Total Funds: {project?.totalFund}</span> /
-              <span
-                className="text-gray-800"> Total Goals: {totalGoal}</span>
+              <span className="font-semibold text-green-600">
+                Total Funds: {project?.totalFund}
+              </span>{' '}
+              /<span className="text-gray-800"> Total Goals: {totalGoal}</span>
             </p>
           </div>
           <Button className="w-full">Contribute</Button>
@@ -89,8 +95,8 @@ export const ProjectDetail = () => {
               key={index}
               className={`p-4 rounded-lg shadow-md ${
                 milestone.achieved >= milestone.goal
-                  ? "bg-green-100 border border-green-300"
-                  : "bg-red-100 border border-red-300"
+                  ? 'bg-green-100 border border-green-300'
+                  : 'bg-red-100 border border-red-300'
               }`}
             >
               <h3 className="text-lg font-bold">{milestone.name}</h3>
@@ -102,7 +108,6 @@ export const ProjectDetail = () => {
           ))}
         </div>
       </div>
-
     </Layout>
   );
 };
