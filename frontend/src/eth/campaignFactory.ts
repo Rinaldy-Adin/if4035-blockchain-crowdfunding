@@ -2,6 +2,7 @@ import Web3 from 'web3';
 import ProjectKickstarterApp from '../abi/ProjectFactory.abi.json';
 import ProjectABI from '../abi/Project.abi.json';
 import {ProjectSummary} from "@/interfaces/project";
+import {getProjectSummary} from "@/eth/campaign.ts";
 
 const FACTORY_ADDRESS = '0x5FbDB2315678afecb367f032d93F642f64180aa3';
 
@@ -56,16 +57,8 @@ export async function getDeployedProjects(web3: Web3): Promise<ProjectSummary[]>
 
     const projectSummaries: ProjectSummary[] = await Promise.all(
       projectAddresses.map(async (address): Promise<ProjectSummary> => {
-        const projectContract = new web3.eth.Contract(ProjectABI, address);
-        const summary = await projectContract.methods.getProjectSummary().call();
-        return {
-          name: summary[0] as string,
-          totalFunds: Number(summary[1]),
-          totalGoals: Number(summary[2]),
-          backersCount: Number(summary[3]),
-          milestonesCount: Number(summary[4]),
-          projectAddress: address,
-        };
+        console.log(web3.eth)
+        return getProjectSummary(web3, address)
       })
     );
 

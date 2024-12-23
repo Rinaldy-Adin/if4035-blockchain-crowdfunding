@@ -1,7 +1,10 @@
 export interface Milestone {
   name: string;
   description: string;
-  target: number;
+  goal: number;
+  achieved: number;
+  verified: boolean;
+  withdrawn: boolean;
 }
 
 export interface Project {

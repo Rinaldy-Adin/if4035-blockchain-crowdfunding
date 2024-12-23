@@ -5,6 +5,7 @@ import {Input} from '@/components/ui/input.tsx';
 import {useAuthContext} from "@/context/auth-context.tsx";
 import {useEffect, useState} from "react";
 import {getDeployedProjects} from "@/eth/campaignFactory.ts";
+import {Link} from "react-router-dom";
 
 export const Home = () => {
   const {web3} = useAuthContext();
@@ -60,7 +61,9 @@ export const Home = () => {
       {/* Grid of Projects */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 p-4">
         {projects.map((project, id) => (
-          <ProjectCard key={id} project={project}/>
+          <Link to={'/project/' + project.projectAddress} key={id}>
+            <ProjectCard project={project}/>
+          </Link>
         ))}
       </div>
     </Layout>
