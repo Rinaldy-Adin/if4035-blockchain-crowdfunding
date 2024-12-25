@@ -1,8 +1,7 @@
 import Web3 from 'web3';
-import ProjectKickstarterApp from '../abi/ProjectFactory.abi.json';
-import ProjectABI from '../abi/Project.abi.json';
+import ProjectKickstarterApp from '../../abi/ProjectFactory.abi.json';
 import { ProjectSummary } from '@/interfaces/project';
-import { getProjectSummary } from '@/eth/campaign.ts';
+import { getProjectSummary } from '@/lib/eth/campaign.ts';
 
 const FACTORY_ADDRESS = '0x5FbDB2315678afecb367f032d93F642f64180aa3';
 
@@ -26,8 +25,6 @@ export async function createProject(
 ): Promise<void> {
   try {
     const projectFactory = getProjectFactoryContract(web3);
-
-    console.log({ fromAddress, milestoneGoals });
     const receipt = await projectFactory.methods
       .createProject(
         projectName,

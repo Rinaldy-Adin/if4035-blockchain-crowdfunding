@@ -1,5 +1,5 @@
 import Web3 from 'web3';
-import ProjectABI from '../abi/Project.abi.json';
+import ProjectABI from '../../abi/Project.abi.json';
 import { Milestone, Project, ProjectSummary } from '@/interfaces/project';
 
 export function getProjectContract(web3: Web3, address: string) {
@@ -16,11 +16,13 @@ export async function getProjectSummary(
   address: string
 ): Promise<ProjectSummary> {
   const projectContract = getProjectContract(web3, address);
-  const summary = await projectContract.methods.getProjectSummary().call();
+  const summary: string[] = await projectContract.methods
+    .getProjectSummary()
+    .call();
   return {
     name: summary[0] as string,
     totalFunds: Number(summary[1]),
-    totalGoals: Number(summary[2]),
+    totalGoals: parseFloat(web3.utils.fromWei(summary[2], 'ether')),
     backersCount: Number(summary[3]),
     milestonesCount: Number(summary[4]),
     projectAddress: address,
@@ -41,7 +43,6 @@ export async function getProjectDetail(
   const milestones: Milestone[] = await projectContract.methods
     .getMilestones()
     .call();
-
   // Format the data
   return {
     name,
@@ -50,7 +51,7 @@ export async function getProjectDetail(
     milestones: milestones.map((milestone) => ({
       name: milestone.name,
       description: milestone.description,
-      goal: Number(milestone.goal),
+      goal: parseFloat(web3.utils.fromWei(milestone.goal.toString(), 'ether')),
       achieved: milestone.achieved,
       verified: milestone.verified,
       withdrawn: milestone.withdrawn,

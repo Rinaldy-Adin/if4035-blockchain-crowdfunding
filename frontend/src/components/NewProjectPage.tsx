@@ -15,7 +15,10 @@ import { Textarea } from './ui/textarea.tsx';
 import CurrencyInput from 'react-currency-input-field';
 import { cn } from '@/lib/utils.ts';
 import { useAuthContext } from '@/context/auth-context.tsx';
-import { createProject, getDeployedProjects } from '@/eth/campaignFactory.ts';
+import {
+  createProject,
+  getDeployedProjects,
+} from '@/lib/eth/campaignFactory.ts';
 
 const MS_DECIMAL_LIMIT = 6;
 

@@ -6,11 +6,12 @@ import {
   ReactNode,
 } from 'react';
 import { Web3 } from 'web3';
+import { useQuery } from '@tanstack/react-query';
 
 interface AuthContextType {
   userAcc: string | null;
-  mmLogin: () => Promise<void>;
   web3: Web3 | null;
+  isLoading: boolean;
 }
 
 export const AuthContext = createContext<AuthContextType | null>(null);
@@ -29,31 +30,28 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   const [address, setAddress] = useState<string | null>(null);
   const [web3, setWeb3] = useState<Web3 | null>(null);
 
-  const connectWallet = async () => {
-    if (!window?.ethereum) {
-      alert('No wallet found. Please install MetaMask.');
-      return;
-    }
+  const { isLoading } = useQuery({
+    queryFn: async () => {
+      try {
+        if (!window?.ethereum) {
+          return;
+        }
 
-    try {
-      const accounts = await window.ethereum.request<string[]>({
-        method: 'eth_requestAccounts',
-      });
+        const accounts = (await window.ethereum.request({
+          method: 'eth_requestAccounts',
+        })) as string[];
 
-      if (accounts.length === 0) {
-        alert('No authorized account found');
+        if (accounts.length === 0) {
+          return;
+        }
+
+        setAddress(accounts[0]);
+      } catch (error) {
+        console.error('error', error);
       }
-
-      setAddress(accounts[0]);
-    } catch (error) {
-      console.error('error', error);
-    }
-  };
-
-  // Fetch connected account on load
-  useEffect(() => {
-    connectWallet();
-  }, []);
+    },
+    queryKey: ['connectWallet'],
+  });
 
   // Handle account changes
   useEffect(() => {
@@ -76,15 +74,15 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
 
   useEffect(() => {
     if (address) {
-      const web3 = new Web3(window.ethereum);
-      setWeb3(web3);
+      const web3Instance = new Web3(window.ethereum);
+      setWeb3(web3Instance);
     }
   }, [address]);
 
   const contextValue: AuthContextType = {
     userAcc: address,
-    mmLogin: connectWallet,
     web3,
+    isLoading,
   };
 
   return (

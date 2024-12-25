@@ -3,12 +3,15 @@ import { ProjectSummary } from '@/interfaces/project';
 import { ProjectCard } from '@/components/projects/project-card.tsx';
 import { useAuthContext } from '@/context/auth-context.tsx';
 import { useEffect, useState } from 'react';
-import { getDeployedProjects } from '@/eth/campaignFactory.ts';
+import { getDeployedProjects } from '@/lib/eth/campaignFactory.ts';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button.tsx';
+import { NoWalletDetected } from '@/components/home/no-wallet-detected.tsx';
+import { LoadingPage } from '@/components/loading-page.tsx';
+import { LoadingIcon } from '@/components/ui/loading-icon.tsx';
 
 export const Home = () => {
-  const { web3 } = useAuthContext();
+  const { web3, isLoading: isAuthLoading } = useAuthContext();
   const [projects, setProjects] = useState<ProjectSummary[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
 
@@ -40,8 +43,12 @@ export const Home = () => {
     };
   }, [web3]);
 
-  if (loading) {
-    return <p>Loading projects...</p>;
+  if (isAuthLoading) {
+    return <LoadingPage />;
+  }
+
+  if (!web3) {
+    return <NoWalletDetected />;
   }
 
   return (
@@ -66,11 +73,18 @@ export const Home = () => {
 
       {/* Grid of Projects */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 p-4">
-        {projects.map((project, id) => (
-          <Link to={'/project/' + project.projectAddress} key={id}>
-            <ProjectCard project={project} />
-          </Link>
-        ))}
+        {loading ? (
+          <div className="flex items-center gap-2 justify-center">
+            <LoadingIcon />
+            <p>Loading projects...</p>
+          </div>
+        ) : (
+          projects.map((project, id) => (
+            <Link to={'/project/' + project.projectAddress} key={id}>
+              <ProjectCard project={project} />
+            </Link>
+          ))
+        )}
       </div>
     </Layout>
   );
