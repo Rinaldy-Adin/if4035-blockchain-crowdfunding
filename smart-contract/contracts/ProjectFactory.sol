@@ -12,6 +12,7 @@ contract ProjectFactory {
     function createProject(
         string memory _name,
         string memory _description,
+        string memory _imageCid,
         string[] memory milestoneNames,
         string[] memory milestoneDescriptions,
         uint256[] memory milestoneGoals
@@ -23,7 +24,7 @@ contract ProjectFactory {
             "Invalid milestones input"
         );
 
-        Project newProject = new Project(msg.sender, _name, _description, milestoneNames, milestoneDescriptions, milestoneGoals);
+        Project newProject = new Project(msg.sender, _name, _description, _imageCid, milestoneNames, milestoneDescriptions, milestoneGoals);
         deployedProjects.push(address(newProject));
 
         emit ProjectCreated(address(newProject), msg.sender, _name, _description);

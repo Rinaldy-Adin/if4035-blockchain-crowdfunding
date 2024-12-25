@@ -8,6 +8,7 @@ contract Project {
     address public manager;
     string public name;
     string public description;
+    string public imageCid;
     uint256 public totalFunds;
 
     struct Milestone {
@@ -44,6 +45,7 @@ contract Project {
         address creator,
         string memory _name,
         string memory _description,
+        string memory _imageCid,
         string[] memory milestoneNames,
         string[] memory milestoneDescriptions,
         uint256[] memory milestoneGoals
@@ -61,6 +63,7 @@ contract Project {
         manager = creator;
         name = _name;
         description = _description;
+        imageCid = _imageCid;
 
         for (uint256 i = 0; i < milestoneNames.length; i++) {
             milestones.push(Milestone({
@@ -129,7 +132,7 @@ contract Project {
         console.log("verifyMilestone");
         require(index < milestones.length, "Invalid milestone index");
         Milestone storage milestone = milestones[index];
-        require(index == 0 || milestones[index-1].verified, "Previous milestone not verified");
+        require(index == 0 || milestones[index - 1].verified, "Previous milestone not verified");
         require(!milestone.verified, "Milestone already verified");
         require(!milestone.withdrawn, "Milestone already withdrawn");
 
@@ -170,6 +173,7 @@ contract Project {
 
     function getProjectSummary() public view returns (
         string memory,
+        string memory,
         uint256,
         uint256,
         uint256,
@@ -181,6 +185,7 @@ contract Project {
         }
         return (
             name,
+            imageCid,
             totalFunds,
             totalGoals,
             backers.length,
