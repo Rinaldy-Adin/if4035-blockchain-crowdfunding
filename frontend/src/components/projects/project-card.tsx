@@ -1,8 +1,12 @@
 import { Card } from '@/components/ui/card.tsx';
 import { ProjectSummary } from '@/interfaces/project';
 import { Progress } from '@/components/ui/progress.tsx';
+import { useEffect } from 'react';
 
 export const ProjectCard = ({ project }: { project: ProjectSummary }) => {
+  useEffect(() => {
+    console.log(project);
+  }, []);
   return (
     <Card className="w-full overflow-hidden rounded-xl shadow-md">
       {/* Image Container with Progress Bar Overlay */}
@@ -30,7 +34,7 @@ export const ProjectCard = ({ project }: { project: ProjectSummary }) => {
           {project.backersCount} contributor(s)
         </p>
         <p className="text-sm text-gray-800 font-medium">
-          {project.totalFunds} out of {project.totalGoals}
+          {project.totalFunds} ETH out of {project.totalGoals} ETH
         </p>
       </div>
     </Card>

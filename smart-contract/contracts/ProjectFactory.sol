@@ -17,6 +17,7 @@ contract ProjectFactory {
         string[] memory milestoneDescriptions,
         uint256[] memory milestoneGoals
     ) public {
+        console.log("createProject");
         require(
             milestoneNames.length > 0 &&
             milestoneNames.length == milestoneDescriptions.length &&
@@ -27,6 +28,7 @@ contract ProjectFactory {
         Project newProject = new Project(msg.sender, _name, _description, _imageCid, milestoneNames, milestoneDescriptions, milestoneGoals);
         deployedProjects.push(address(newProject));
 
+        console.log("Project created 123");
         emit ProjectCreated(address(newProject), msg.sender, _name, _description);
     }
 

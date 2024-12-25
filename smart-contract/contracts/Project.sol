@@ -50,6 +50,7 @@ contract Project {
         string[] memory milestoneDescriptions,
         uint256[] memory milestoneGoals
     ) {
+        console.log("Project creating");
         require(
             milestoneNames.length > 0 &&
             milestoneNames.length == milestoneDescriptions.length &&
@@ -65,6 +66,7 @@ contract Project {
         description = _description;
         imageCid = _imageCid;
 
+        console.log("Milestones", milestoneNames.length);
         for (uint256 i = 0; i < milestoneNames.length; i++) {
             milestones.push(Milestone({
                 name: milestoneNames[i],
@@ -78,6 +80,7 @@ contract Project {
                 verificationRequestId: 0
             }));
         }
+        console.log("Milestones created");
     }
 
     function contribute() public payable {
@@ -129,7 +132,6 @@ contract Project {
     }
 
     function verifyMilestone(uint256 index) public restricted {
-        console.log("verifyMilestone");
         require(index < milestones.length, "Invalid milestone index");
         Milestone storage milestone = milestones[index];
         require(index == 0 || milestones[index - 1].verified, "Previous milestone not verified");
@@ -143,17 +145,14 @@ contract Project {
             "Too soon to request verification again"
         );
 
-        console.log("starting verification");
         IOracle oracle = IOracle(oracleAddress);
         uint256 requestId = oracle.requestMilestoneVerification(address(this), index);
         requestToMilestone[requestId] = index;
         milestone.verificationRequestId = requestId;
         milestone.lastVerificationRequest = block.timestamp;
-        console.log(milestone.lastVerificationRequest);
     }
 
     function fulfillVerifyMilestoneRequest(bool verified, uint256 requestId) public {
-        console.log("fulfillVerifyMilestoneRequest");
         uint256 milestoneIndex = requestToMilestone[requestId];
         require(milestoneIndex < milestones.length, "Invalid milestone index");
 
@@ -167,7 +166,6 @@ contract Project {
         milestone.verified = verified;
         delete requestToMilestone[requestId];
 
-        console.log("verified", verified);
         emit MilestoneVerificationChanged(milestoneIndex, verified);
     }
 

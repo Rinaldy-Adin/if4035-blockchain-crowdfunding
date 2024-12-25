@@ -49,14 +49,11 @@ async function main() {
   oracleContract.on(
     "MilestoneVerificationRequested",
     async (callerAddress: string, id: number) => {
-      console.log("MilestoneVerificationRequested");
-      console.log("callerAddress", callerAddress);
-      console.log("id", id);
       requestsQueue.push({ callerAddress, id });
     }
   );
 
-  setInterval(async () => {
+  const intervalId = setInterval(async () => {
     let processedRequests = 0;
 
     while (requestsQueue.length > 0 && processedRequests < BATCH_SIZE) {
@@ -69,10 +66,7 @@ async function main() {
           const randomNumber = await requestRandomNumber();
 
           // Assuming submitVerification accepts these arguments
-          await oracleContract.submitVerification(
-            request.id,
-            randomNumber % 2 === 0
-          );
+          await oracleContract.submitVerification(request.id, randomNumber);
           break;
         } catch (error) {
           retries++;
@@ -83,6 +77,35 @@ async function main() {
       processedRequests++;
     }
   }, SLEEP_TIME);
+
+  // Handle cleanup on SIGTERM (Ctrl+C)
+  process.on("SIGTERM", async () => {
+    console.log("SIGTERM received. Cleaning up...");
+    clearInterval(intervalId); // Stop the interval
+
+    try {
+      await oracleContract.removeProvider(dataProvider.address);
+      console.log("Provider removed successfully.");
+    } catch (error) {
+      console.error("Error removing provider:", error);
+    }
+
+    process.exit(0); // Exit the process
+  });
+
+  process.on("SIGINT", async () => {
+    console.log("SIGINT received. Cleaning up...");
+    clearInterval(intervalId); // Stop the interval
+
+    try {
+      await oracleContract.removeProvider(dataProvider.address);
+      console.log("Provider removed successfully.");
+    } catch (error) {
+      console.error("Error removing provider:", error);
+    }
+
+    process.exit(0); // Exit the process
+  });
 }
 
 main().catch((error) => {

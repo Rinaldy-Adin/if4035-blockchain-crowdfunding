@@ -23,7 +23,7 @@ export const Home = () => {
       try {
         if (web3) {
           const projectSummaries = await getDeployedProjects(web3);
-
+          console.log(projectSummaries);
           if (isMounted) {
             setProjects(projectSummaries);
             setLoading(false);

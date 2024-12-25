@@ -6,7 +6,8 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "nodemon",
     "export:abi": "node scripts/exportABI.js",
-    "start:provider": "npx hardhat run scripts/provider.ts --network localhost"
+    "start:provider": "npx hardhat run scripts/provider.ts --network localhost",
+    "deploy": "npx hardhat ignition deploy ./ignition/modules/Oracle.ts --network localhost"
   },
   "keywords": [],
   "author": "",

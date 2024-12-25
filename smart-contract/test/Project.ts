@@ -23,6 +23,7 @@ describe("ProjectFactory", function () {
     const createProjectTx = await projectFactory.createProject(
       projectName,
       projectDescription,
+      "",
       milestoneNames,
       milestoneDescriptions,
       milestoneGoals
