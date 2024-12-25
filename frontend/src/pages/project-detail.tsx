@@ -6,6 +6,7 @@ import { getProjectDetail } from '@/lib/eth/campaign.ts';
 import { useParams } from 'react-router-dom';
 import { Progress } from '@/components/ui/progress.tsx';
 import { Button } from '@/components/ui/button.tsx';
+import { MilestoneCard } from '@/components/projects/milestone-card.tsx';
 
 export const ProjectDetail = () => {
   const { web3 } = useAuthContext();
@@ -21,7 +22,7 @@ export const ProjectDetail = () => {
       try {
         if (web3 && address) {
           const projectDetail = await getProjectDetail(web3, address);
-
+          console.log(projectDetail);
           if (isMounted) {
             setProject(projectDetail);
             setTotalGoal(
@@ -76,7 +77,7 @@ export const ProjectDetail = () => {
             />
             {/* Progress Bar Overlay */}
             <Progress
-              value={(project?.totalFund / totalGoal) * 100}
+              value={Math.floor(((project?.totalFund || 0) / totalGoal) * 100)}
               className="absolute bottom-0 left-0 w-full"
             />
           </div>
@@ -95,20 +96,12 @@ export const ProjectDetail = () => {
         {/* Milestones */}
         <div className="flex flex-col gap-6 w-full">
           {project?.milestones.map((milestone, index) => (
-            <div
+            <MilestoneCard
               key={index}
-              className={`p-4 rounded-lg shadow-md ${
-                milestone.achieved >= milestone.goal
-                  ? 'bg-green-100 border border-green-300'
-                  : 'bg-red-100 border border-red-300'
-              }`}
-            >
-              <h3 className="text-lg font-bold">{milestone.name}</h3>
-              <p className="text-gray-700">{milestone.description}</p>
-              <p className="mt-2">
-                Goal: <span className="font-semibold">{milestone.goal}</span>
-              </p>
-            </div>
+              milestone={milestone}
+              projectAddress={address}
+              milestoneIndex={index}
+            />
           ))}
         </div>
       </div>

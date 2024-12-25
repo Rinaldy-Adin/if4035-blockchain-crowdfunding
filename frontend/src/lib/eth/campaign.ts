@@ -61,3 +61,20 @@ export async function getProjectDetail(
     })),
   };
 }
+
+export async function verifyProjectMilestone(
+  web3: Web3,
+  address: string,
+  milestoneIndex: number
+) {
+  const projectContract = getProjectContract(web3, address);
+  const receipt = await projectContract.methods
+    .verifyMilestone(milestoneIndex)
+    .send({
+      from: address,
+      gas: '3000000',
+    });
+
+  console.log('Milestone Verification Requested');
+  console.log('Transaction Receipt:', receipt);
+}
