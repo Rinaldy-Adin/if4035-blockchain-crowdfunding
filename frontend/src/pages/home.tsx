@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button.tsx';
 import { NoWalletDetected } from '@/components/home/no-wallet-detected.tsx';
 import { LoadingPage } from '@/components/loading-page.tsx';
 import { LoadingIcon } from '@/components/ui/loading-icon.tsx';
+import { SearchIcon } from 'lucide-react';
 
 export const Home = () => {
   const { web3, isLoading: isAuthLoading } = useAuthContext();
@@ -72,18 +73,25 @@ export const Home = () => {
       </div>
 
       {/* Grid of Projects */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 p-4">
+      <div className="p-4">
         {loading ? (
           <div className="flex items-center gap-2 justify-center">
             <LoadingIcon />
             <p>Loading projects...</p>
           </div>
+        ) : projects.length > 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+            {projects.map((project, id) => (
+              <Link to={'/project/' + project.projectAddress} key={id}>
+                <ProjectCard project={project} />
+              </Link>
+            ))}
+          </div>
         ) : (
-          projects.map((project, id) => (
-            <Link to={'/project/' + project.projectAddress} key={id}>
-              <ProjectCard project={project} />
-            </Link>
-          ))
+          <div className="flex items-center gap-2 justify-center">
+            <SearchIcon />
+            <p>No projects found.</p>
+          </div>
         )}
       </div>
     </Layout>

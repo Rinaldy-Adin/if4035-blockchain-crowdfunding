@@ -19,6 +19,7 @@ export async function createProject(
   fromAddress: string,
   projectName: string,
   projectDescription: string,
+  projectImageCid: string,
   milestoneNames: string[],
   milestoneDescriptions: string[],
   milestoneGoals: string[]
@@ -29,6 +30,7 @@ export async function createProject(
       .createProject(
         projectName,
         projectDescription,
+        projectImageCid,
         milestoneNames,
         milestoneDescriptions,
         milestoneGoals

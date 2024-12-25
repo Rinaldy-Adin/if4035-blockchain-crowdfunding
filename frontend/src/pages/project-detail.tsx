@@ -2,7 +2,7 @@ import { Layout } from '@/layouts/layout.tsx';
 import { Project } from '@/interfaces/project';
 import { useAuthContext } from '@/context/auth-context.tsx';
 import { useEffect, useState } from 'react';
-import { getProjectDetail } from '@/eth/campaign.ts';
+import { getProjectDetail } from '@/lib/eth/campaign.ts';
 import { useParams } from 'react-router-dom';
 import { Progress } from '@/components/ui/progress.tsx';
 import { Button } from '@/components/ui/button.tsx';
@@ -66,7 +66,11 @@ export const ProjectDetail = () => {
         <div className="w-full space-y-4">
           <div className="relative h-[480px]">
             <img
-              src={'/sample.jpeg'}
+              src={
+                project?.imageCid
+                  ? `https://${project?.imageCid}.ipfs.w3s.link`
+                  : '/images/no-image.jpg'
+              }
               className="w-full h-full object-cover"
               alt={project?.name}
             />

@@ -8,7 +8,11 @@ export const ProjectCard = ({ project }: { project: ProjectSummary }) => {
       {/* Image Container with Progress Bar Overlay */}
       <div className="relative w-full h-[240px]">
         <img
-          src={'/sample.jpeg'}
+          src={
+            project.imageCid
+              ? `https://${project?.imageCid}.ipfs.w3s.link`
+              : '/images/no-image.jpg'
+          }
           className="w-full h-full object-cover"
           alt={project.name}
         />

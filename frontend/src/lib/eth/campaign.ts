@@ -21,10 +21,11 @@ export async function getProjectSummary(
     .call();
   return {
     name: summary[0] as string,
-    totalFunds: Number(summary[1]),
-    totalGoals: parseFloat(web3.utils.fromWei(summary[2], 'ether')),
-    backersCount: Number(summary[3]),
-    milestonesCount: Number(summary[4]),
+    imageCid: summary[1] as string,
+    totalFunds: Number(summary[2]),
+    totalGoals: parseFloat(web3.utils.fromWei(summary[3], 'ether')),
+    backersCount: Number(summary[4]),
+    milestonesCount: Number(summary[5]),
     projectAddress: address,
   };
 }
@@ -38,6 +39,7 @@ export async function getProjectDetail(
   const description: string = await projectContract.methods
     .description()
     .call();
+  const imageCid: string = await projectContract.methods.imageCid().call();
   const totalFunds: number = await projectContract.methods.totalFunds().call();
 
   const milestones: Milestone[] = await projectContract.methods
@@ -47,6 +49,7 @@ export async function getProjectDetail(
   return {
     name,
     description,
+    imageCid,
     totalFund: Number(totalFunds),
     milestones: milestones.map((milestone) => ({
       name: milestone.name,

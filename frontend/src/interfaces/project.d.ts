@@ -10,6 +10,7 @@ export interface Milestone {
 export interface Project {
   name: string;
   description: string;
+  imageCid: string;
   milestones: Milestone[];
   totalFund: number;
 }
@@ -17,6 +18,7 @@ export interface Project {
 export type ProjectSummary = {
   projectAddress: string;
   name: string;
+  imageCid: string;
   totalFunds: number;
   totalGoals: number;
   backersCount: number;

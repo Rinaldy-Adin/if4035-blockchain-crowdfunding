@@ -19,6 +19,10 @@ import {
   createProject,
   getDeployedProjects,
 } from '@/lib/eth/campaignFactory.ts';
+import { useMutation } from '@tanstack/react-query';
+import { uploadFile } from '@/lib/ipfs/upload.ts';
+import { toast } from '@/hooks/use-toast.ts';
+import { useState } from 'react';
 
 const MS_DECIMAL_LIMIT = 6;
 
@@ -54,12 +58,22 @@ type newProjectFormType = z.infer<typeof newProjectFormSchema>;
 
 export default function NewProjectPage() {
   const { web3, userAcc } = useAuthContext();
+  const [file, setFile] = useState<File | null>(null);
 
   const form = useForm<newProjectFormType>({
     resolver: zodResolver(newProjectFormSchema),
     defaultValues: {
       name: '',
       description: '',
+    },
+  });
+
+  const uploadMutation = useMutation({
+    mutationFn: () => uploadFile(file),
+    onError: (err) => {
+      toast({
+        description: `Error uploading file: ${err}`,
+      });
     },
   });
 
@@ -73,6 +87,12 @@ export default function NewProjectPage() {
   });
 
   async function onSubmit(values: newProjectFormType) {
+    let imageCid = '';
+    if (file) {
+      const uploadResult = await uploadMutation.mutateAsync(file);
+      imageCid = uploadResult.cid;
+    }
+
     if (web3 && userAcc) {
       const milestoneNames = values.milestones.map(({ name }) => name);
       const milestoneDescriptions = values.milestones.map(
@@ -87,6 +107,7 @@ export default function NewProjectPage() {
         userAcc,
         values.name,
         values.description,
+        imageCid,
         milestoneNames,
         milestoneDescriptions,
         milestoneGoals
@@ -126,7 +147,7 @@ export default function NewProjectPage() {
             name="description"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Project Name</FormLabel>
+                <FormLabel>Project Description</FormLabel>
                 <FormControl>
                   <Textarea
                     placeholder="Enter your project description here"
@@ -137,6 +158,27 @@ export default function NewProjectPage() {
               </FormItem>
             )}
           />
+          <FormItem className="flex flex-col">
+            <FormLabel>Project Image</FormLabel>
+            <Input
+              type="file"
+              onChange={(e) => {
+                const selectedFile = e.target.files?.[0];
+                setFile(selectedFile || null);
+              }}
+              accept="image/*"
+            />
+            {file && (
+              <div className="mt-2">
+                <img
+                  src={URL.createObjectURL(file)}
+                  alt="Selected file preview"
+                  className="mt-2 max-w-xs rounded shadow"
+                />
+              </div>
+            )}
+            {uploadMutation.isPending && <p>Uploading image...</p>}
+          </FormItem>
           <div>
             <div className="flex justify-between">
               <p

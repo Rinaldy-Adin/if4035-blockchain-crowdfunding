@@ -43,6 +43,11 @@
         "type": "string"
       },
       {
+        "internalType": "string",
+        "name": "_imageCid",
+        "type": "string"
+      },
+      {
         "internalType": "string[]",
         "name": "milestoneNames",
         "type": "string[]"
