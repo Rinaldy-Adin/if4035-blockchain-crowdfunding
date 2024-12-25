@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.28;
 
-import "./Project.sol";
+import {Project} from "./Project.sol";
+import "hardhat/console.sol";
 
 contract ProjectFactory {
     address[] public deployedProjects;

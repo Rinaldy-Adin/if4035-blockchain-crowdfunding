@@ -1,6 +1,9 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.28;
 
+import "./IOracle.sol";
+import "hardhat/console.sol";
+
 contract Project {
     address public manager;
     string public name;
@@ -15,15 +18,21 @@ contract Project {
         uint256 achieved;
         bool verified;
         bool withdrawn;
+        uint256 lastVerificationRequest;
+        uint256 verificationRequestId;
     }
 
     Milestone[] public milestones;
     mapping(address => uint256) public contributions;
+    mapping(uint256 => uint256) public requestToMilestone;
     address[] public backers;
+
+    // Hardcoded oracle address
+    address public oracleAddress = 0x5FbDB2315678afecb367f032d93F642f64180aa3;
 
     event ContributionMade(address indexed backer, uint256 amount);
     event MilestoneUpdated(uint256 milestoneIndex, uint256 achievedAmount);
-    event MilestoneVerified(uint256 milestoneIndex, string milestoneName);
+    event MilestoneVerificationChanged(uint256 milestoneIndex, bool verified);
     event FundsWithdrawn(address manager, uint256 amount);
 
     modifier restricted() {
@@ -61,7 +70,9 @@ contract Project {
 
                 achieved: 0,
                 verified: false,
-                withdrawn: false
+                withdrawn: false,
+                lastVerificationRequest: 0,
+                verificationRequestId: 0
             }));
         }
     }
@@ -114,6 +125,49 @@ contract Project {
         emit FundsWithdrawn(manager, amount);
     }
 
+    function verifyMilestone(uint256 index) public restricted {
+        console.log("verifyMilestone");
+        require(index < milestones.length, "Invalid milestone index");
+        Milestone storage milestone = milestones[index];
+        require(index == 0 || milestones[index-1].verified, "Previous milestone not verified");
+        require(!milestone.verified, "Milestone already verified");
+        require(!milestone.withdrawn, "Milestone already withdrawn");
+
+        // Prevent spam requests
+        require(
+            milestone.lastVerificationRequest == 0 ||
+            block.timestamp > milestone.lastVerificationRequest + 24 hours,
+            "Too soon to request verification again"
+        );
+
+        console.log("starting verification");
+        IOracle oracle = IOracle(oracleAddress);
+        uint256 requestId = oracle.requestMilestoneVerification(address(this), index);
+        requestToMilestone[requestId] = index;
+        milestone.verificationRequestId = requestId;
+        milestone.lastVerificationRequest = block.timestamp;
+        console.log(milestone.lastVerificationRequest);
+    }
+
+    function fulfillVerifyMilestoneRequest(bool verified, uint256 requestId) public {
+        console.log("fulfillVerifyMilestoneRequest");
+        uint256 milestoneIndex = requestToMilestone[requestId];
+        require(milestoneIndex < milestones.length, "Invalid milestone index");
+
+        Milestone storage milestone = milestones[milestoneIndex];
+        require(milestone.verificationRequestId == requestId, "Invalid request ID");
+        require(!milestone.verified, "Milestone already verified");
+
+        // Check if the caller is the oracle
+        require(msg.sender == oracleAddress, "Caller is not the registered oracle");
+
+        milestone.verified = verified;
+        delete requestToMilestone[requestId];
+
+        console.log("verified", verified);
+        emit MilestoneVerificationChanged(milestoneIndex, verified);
+    }
+
     function getProjectSummary() public view returns (
         string memory,
         uint256,
@@ -136,18 +190,5 @@ contract Project {
 
     function getMilestones() public view returns (Milestone[] memory) {
         return milestones;
-    }
-
-    // TODO: adjust to use oracle @rachel
-    function verifyMilestone(uint256 index) public restricted {
-        require(index < milestones.length, "Invalid milestone index");
-        Milestone storage milestone = milestones[index];
-        require(!milestone.verified, "Milestone already verified");
-        require(!milestone.withdrawn, "Milestone already withdrawn");
-        require(milestone.achieved >= milestone.goal, "Milestone goal has not been met");
-
-        milestone.verified = true;
-
-        emit MilestoneVerified(index, milestone.name);
     }
 }
