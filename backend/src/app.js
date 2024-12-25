@@ -1,4 +1,5 @@
 import express from 'express';
+import cors from 'cors';
 import multer from 'multer';
 import bodyParser from 'body-parser';
 import dotenv from 'dotenv';
@@ -9,6 +10,21 @@ dotenv.config();
 const app = express();
 const upload = multer();
 
+const allowedOrigins = process.env.CORS_ORIGINS.split(',');
+
+const corsOptions = {
+    origin: function (origin, callback) {
+        if (!origin) return callback(null, true);
+
+        if (allowedOrigins.includes(origin)) {
+            callback(null, true);
+        } else {
+            callback(new Error('Not allowed by CORS'));
+        }
+    },
+};
+
+app.use(cors(corsOptions));
 app.use(bodyParser.json());
 
 // Initialize Web3.Storage client
