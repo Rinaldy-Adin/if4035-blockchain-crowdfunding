@@ -50,7 +50,6 @@ contract Project {
         string[] memory milestoneDescriptions,
         uint256[] memory milestoneGoals
     ) {
-        console.log("Project creating");
         require(
             milestoneNames.length > 0 &&
             milestoneNames.length == milestoneDescriptions.length &&
@@ -66,7 +65,6 @@ contract Project {
         description = _description;
         imageCid = _imageCid;
 
-        console.log("Milestones", milestoneNames.length);
         for (uint256 i = 0; i < milestoneNames.length; i++) {
             milestones.push(Milestone({
                 name: milestoneNames[i],
@@ -80,7 +78,6 @@ contract Project {
                 verificationRequestId: 0
             }));
         }
-        console.log("Milestones created");
     }
 
     function contribute() public payable {
@@ -145,6 +142,9 @@ contract Project {
             "Too soon to request verification again"
         );
 
+        console.log("calling oracle");
+        console.log(oracleAddress);
+
         IOracle oracle = IOracle(oracleAddress);
         uint256 requestId = oracle.requestMilestoneVerification(address(this), index);
         requestToMilestone[requestId] = index;
@@ -175,19 +175,22 @@ contract Project {
         uint256,
         uint256,
         uint256,
-        uint256
+        uint256,
+        address
     ) {
         uint256 totalGoals = 0;
         for (uint256 j = 0; j < milestones.length; j++) {
             totalGoals += milestones[j].goal;
         }
+
         return (
             name,
             imageCid,
             totalFunds,
             totalGoals,
             backers.length,
-            milestones.length
+            milestones.length,
+            manager
         );
     }
 

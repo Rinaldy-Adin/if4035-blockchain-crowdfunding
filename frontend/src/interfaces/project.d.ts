@@ -5,6 +5,7 @@ export interface Milestone {
   achieved: number;
   verified: boolean;
   withdrawn: boolean;
+  lastVerificationRequest: bigint; // time
 }
 
 export interface Project {
@@ -13,6 +14,7 @@ export interface Project {
   imageCid: string;
   milestones: Milestone[];
   totalFund: number;
+  manager: string;
 }
 
 export type ProjectSummary = {

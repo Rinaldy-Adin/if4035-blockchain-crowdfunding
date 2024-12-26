@@ -132,7 +132,7 @@ contract Oracle is AccessControl {
         address provider
     ) external onlyRole(DEFAULT_ADMIN_ROLE) {
         require(hasRole(PROVIDER_ROLE, provider), "Not a provider");
-        require(numProviders > MIN_PROVIDERS, "Cannot go below minimum providers");
+//        require(numProviders > MIN_PROVIDERS, "Cannot go below minimum providers");
 
         _revokeRole(PROVIDER_ROLE, provider);
         numProviders--;
