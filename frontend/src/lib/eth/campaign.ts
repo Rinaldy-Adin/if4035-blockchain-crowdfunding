@@ -45,12 +45,15 @@ export async function getProjectDetail(
   const milestones: Milestone[] = await projectContract.methods
     .getMilestones()
     .call();
+
+  const manager: string = await projectContract.methods.manager().call();
   // Format the data
   return {
     name,
     description,
     imageCid,
     totalFund: Number(totalFunds),
+    manager,
     milestones: milestones.map((milestone) => ({
       name: milestone.name,
       description: milestone.description,
@@ -58,6 +61,7 @@ export async function getProjectDetail(
       achieved: milestone.achieved,
       verified: milestone.verified,
       withdrawn: milestone.withdrawn,
+      lastVerificationRequest: milestone.lastVerificationRequest,
     })),
   };
 }
@@ -65,13 +69,18 @@ export async function getProjectDetail(
 export async function verifyProjectMilestone(
   web3: Web3,
   address: string,
-  milestoneIndex: number
+  milestoneIndex: number,
+  accountAddress: string | null
 ) {
+  if (!accountAddress) {
+    throw new Error('No account address found');
+  }
+
   const projectContract = getProjectContract(web3, address);
   const receipt = await projectContract.methods
     .verifyMilestone(milestoneIndex)
     .send({
-      from: address,
+      from: accountAddress,
       gas: '3000000',
     });
 
