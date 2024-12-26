@@ -7,6 +7,7 @@ import { useParams } from 'react-router-dom';
 import { Progress } from '@/components/ui/progress.tsx';
 import { Button } from '@/components/ui/button.tsx';
 import { MilestoneCard } from '@/components/projects/milestone-card.tsx';
+import { LoadingPage } from '@/components/loading-page.tsx';
 
 export const ProjectDetail = () => {
   const { web3 } = useAuthContext();
@@ -50,7 +51,7 @@ export const ProjectDetail = () => {
   }, [web3, address]);
 
   if (loading) {
-    return <p>Loading projects...</p>;
+    return <LoadingPage />;
   }
 
   return (
@@ -94,13 +95,14 @@ export const ProjectDetail = () => {
         </div>
 
         {/* Milestones */}
-        <div className="flex flex-col gap-6 w-full">
+        <div className="flex flex-col w-full">
           {project?.milestones.map((milestone, index) => (
             <MilestoneCard
               key={index}
               milestone={milestone}
               projectAddress={address}
               milestoneIndex={index}
+              projectManager={project?.manager}
             />
           ))}
         </div>
