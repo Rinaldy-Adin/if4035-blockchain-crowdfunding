@@ -23,7 +23,7 @@ import { Badge } from '@/components/ui/badge.tsx';
 import { Separator } from '@/components/ui/separator.tsx';
 import { MilestoneIcon, Text, XIcon } from 'lucide-react';
 
-const MS_DECIMAL_LIMIT = 6;
+export const MS_DECIMAL_LIMIT = 6;
 
 const newProjectFormSchema = z.object({
   name: z.string().min(2, {
