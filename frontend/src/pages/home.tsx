@@ -3,7 +3,7 @@ import { ProjectSummary } from '@/interfaces/project';
 import { ProjectCard } from '@/components/projects/project-card.tsx';
 import { useAuthContext } from '@/context/auth-context.tsx';
 import { useEffect, useState } from 'react';
-import { getDeployedProjects } from '@/lib/eth/campaignFactory.ts';
+import { getDeployedProjects, getUserContributions } from '@/lib/eth/campaignFactory.ts';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button.tsx';
 import { NoWalletDetected } from '@/components/home/no-wallet-detected.tsx';
@@ -12,7 +12,7 @@ import { LoadingIcon } from '@/components/ui/loading-icon.tsx';
 import { SearchIcon } from 'lucide-react';
 
 export const Home = () => {
-  const { web3, isLoading: isAuthLoading } = useAuthContext();
+  const { web3, isLoading: isAuthLoading, userAcc } = useAuthContext();
   const [projects, setProjects] = useState<ProjectSummary[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
 
@@ -27,6 +27,11 @@ export const Home = () => {
           if (isMounted) {
             setProjects(projectSummaries);
             setLoading(false);
+
+            if (userAcc) {
+              const contributions = await getUserContributions(web3, userAcc);
+              console.log({ contributions });
+            }
           }
         }
       } catch (error) {

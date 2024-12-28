@@ -30,8 +30,8 @@ contract Project {
 
     // Hardcoded oracle address
     address public oracleAddress = 0x5FbDB2315678afecb367f032d93F642f64180aa3;
+    address public factoryAddress;
 
-    event ContributionMade(address indexed backer, uint256 amount);
     event MilestoneUpdated(uint256 milestoneIndex, uint256 achievedAmount);
     event MilestoneVerificationChanged(uint256 milestoneIndex, bool verified);
     event FundsWithdrawn(address manager, uint256 amount);
@@ -48,7 +48,8 @@ contract Project {
         string memory _imageCid,
         string[] memory milestoneNames,
         string[] memory milestoneDescriptions,
-        uint256[] memory milestoneGoals
+        uint256[] memory milestoneGoals,
+        address _factoryAddress
     ) {
         require(
             milestoneNames.length > 0 &&
@@ -64,6 +65,7 @@ contract Project {
         name = _name;
         description = _description;
         imageCid = _imageCid;
+        factoryAddress = _factoryAddress;
 
         for (uint256 i = 0; i < milestoneNames.length; i++) {
             milestones.push(Milestone({
@@ -80,13 +82,14 @@ contract Project {
         }
     }
 
-    function contribute() public payable {
+    function receiveContribution(address contributor) external payable {
         require(msg.value > 0, "Contribution must be greater than 0");
+        require(msg.sender == factoryAddress, "Only the factory can forward contributions");
 
-        if (contributions[msg.sender] == 0) {
-            backers.push(msg.sender);
+        if (contributions[contributor] == 0) {
+            backers.push(contributor);
         }
-        contributions[msg.sender] += msg.value;
+        contributions[contributor] += msg.value;
         totalFunds += msg.value;
 
         uint256 remainingContribution = msg.value;
@@ -108,8 +111,6 @@ contract Project {
                 emit MilestoneUpdated(i, milestone.achieved);
             }
         }
-
-        emit ContributionMade(msg.sender, msg.value);
     }
 
     function withdrawFunds(uint256 index) public restricted {

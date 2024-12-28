@@ -2,7 +2,7 @@ import { Layout } from '@/layouts/layout.tsx';
 import { Project } from '@/interfaces/project';
 import { useAuthContext } from '@/context/auth-context.tsx';
 import { useEffect, useState } from 'react';
-import { contributeToProject, getProjectDetail } from '@/lib/eth/campaign.ts';
+import { getProjectDetail } from '@/lib/eth/campaign.ts';
 import { useParams } from 'react-router-dom';
 import { Progress } from '@/components/ui/progress.tsx';
 import { Button } from '@/components/ui/button.tsx';
@@ -12,6 +12,7 @@ import { useMutation } from '@tanstack/react-query';
 import { toast } from '@/hooks/use-toast';
 import CurrencyInput from 'react-currency-input-field';
 import { MS_DECIMAL_LIMIT } from '@/components/projects/new-project-form';
+import { contributeToProject } from '@/lib/eth/campaignFactory';
 
 export const ProjectDetail = () => {
   const { web3, userAcc } = useAuthContext();

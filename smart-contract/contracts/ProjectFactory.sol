@@ -8,6 +8,7 @@ contract ProjectFactory {
     address[] public deployedProjects;
 
     event ProjectCreated(address campaignAddress, address creator, string name, string description);
+    event ContributionMade(address indexed project, address indexed backer, uint256 amount);
 
     function createProject(
         string memory _name,
@@ -25,7 +26,7 @@ contract ProjectFactory {
             "Invalid milestones input"
         );
 
-        Project newProject = new Project(msg.sender, _name, _description, _imageCid, milestoneNames, milestoneDescriptions, milestoneGoals);
+        Project newProject = new Project(msg.sender, _name, _description, _imageCid, milestoneNames, milestoneDescriptions, milestoneGoals, address(this));
         deployedProjects.push(address(newProject));
 
         console.log("Project created 123");
@@ -34,5 +35,14 @@ contract ProjectFactory {
 
     function getDeployedProjects() public view returns (address[] memory) {
         return deployedProjects;
+    }
+
+    function contributeToProject(address projectAddress) public payable {
+        require(msg.value > 0, "Contribution must be greater than 0");
+
+        Project project = Project(projectAddress);
+        project.receiveContribution{value: msg.value}(msg.sender);
+
+        emit ContributionMade(projectAddress, msg.sender, msg.value);
     }
 }

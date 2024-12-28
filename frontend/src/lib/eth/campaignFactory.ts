@@ -1,9 +1,9 @@
-import Web3 from 'web3';
+import Web3, { EventLog } from 'web3';
 import ProjectKickstarterApp from '../../abi/ProjectFactory.abi.json';
 import { ProjectSummary } from '@/interfaces/project';
 import { getProjectSummary } from '@/lib/eth/campaign.ts';
 
-const FACTORY_ADDRESS = '0x5FbDB2315678afecb367f032d93F642f64180aa3';
+export const FACTORY_ADDRESS = '0x5fbdb2315678afecb367f032d93f642f64180aa3';
 
 export function getProjectFactoryContract(web3: Web3) {
   try {
@@ -70,4 +70,56 @@ export async function getDeployedProjects(
     console.error('Error fetching deployed projects:', error);
     throw error;
   }
+}
+
+export async function contributeToProject(
+  web3: Web3,
+  projectAddress: string,
+  contributionAmount: string,
+  accountAddress: string | null
+) {
+  if (!accountAddress) {
+    throw new Error('No account address found');
+  }
+
+  if (!projectAddress) {
+    throw new Error('No project address found');
+  }
+
+  const factoryContract = getProjectFactoryContract(web3);
+  const amountInWei = web3.utils.toWei(contributionAmount, 'ether');
+
+  const receipt = await factoryContract.methods
+    .contributeToProject(projectAddress)
+    .send({
+      from: accountAddress,
+      value: amountInWei,
+      gas: '3000000',
+    });
+
+  console.log('Contribution Made');
+  console.log('Transaction Receipt:', receipt);
+}
+
+export async function getUserContributions(
+  web3: Web3,
+  userAddress: string
+) {
+  const factoryContract = getProjectFactoryContract(web3);
+
+  // "allEvents" typecast done to ignore error as .getPastEvents has outdated typescript definition
+  const events = (await factoryContract.getPastEvents("ContributionMade" as "allEvents", {
+    filter: { backer: userAddress },
+    fromBlock: 0,
+    toBlock: "latest",
+  })) as EventLog[];
+
+  console.log(events);
+
+  return events.map((event) => ({
+    project: event.returnValues.project,
+    backer: event.returnValues.backer,
+    amount: web3.utils.fromWei(event.returnValues.amount as number, "ether"),
+    transactionHash: event.transactionHash,
+  }));
 }

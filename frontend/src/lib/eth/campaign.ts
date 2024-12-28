@@ -87,28 +87,3 @@ export async function verifyProjectMilestone(
   console.log('Milestone Verification Requested');
   console.log('Transaction Receipt:', receipt);
 }
-
-export async function contributeToProject(
-  web3: Web3,
-  address: string,
-  contributionAmount: string,
-  accountAddress: string | null
-) {
-  if (!accountAddress) {
-    throw new Error('No account address found');
-  }
-
-  const projectContract = getProjectContract(web3, address);
-  const amountInWei = web3.utils.toWei(contributionAmount, 'ether');
-
-  const receipt = await projectContract.methods
-    .contribute()
-    .send({
-      from: accountAddress,
-      value: amountInWei,
-      gas: '3000000',
-    });
-
-  console.log('Contribution Made');
-  console.log('Transaction Receipt:', receipt);
-}
