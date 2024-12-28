@@ -23,7 +23,7 @@ export async function getProjectSummary(
   return {
     name: summary[0] as string,
     imageCid: summary[1] as string,
-    totalFunds: Number(summary[2]),
+    totalFunds: parseFloat(web3.utils.fromWei(summary[2], 'ether')),
     totalGoals: parseFloat(web3.utils.fromWei(summary[3], 'ether')),
     backersCount: Number(summary[4]),
     milestonesCount: Number(summary[5]),
@@ -59,7 +59,9 @@ export async function getProjectDetail(
       name: milestone.name,
       description: milestone.description,
       goal: parseFloat(web3.utils.fromWei(milestone.goal.toString(), 'ether')),
-      achieved: milestone.achieved,
+      achieved: parseFloat(
+        web3.utils.fromWei(milestone.achieved.toString(), 'ether')
+      ),
       verified: milestone.verified,
       withdrawn: milestone.withdrawn,
       lastVerificationRequest: milestone.lastVerificationRequest,
@@ -106,4 +108,26 @@ export async function getProjectContributions(
     amount: web3.utils.fromWei((event.returnValues.amount as bigint).toString(), "ether"),
     timestamp: dayjs.unix(Number(event.returnValues.timestamp)).toDate(),
   }));
+}
+
+export async function withdrawFundsFromProject(
+  web3: Web3,
+  address: string,
+  milestoneIndex: number,
+  accountAddress: string | null
+) {
+  if (!accountAddress) {
+    throw new Error('No account address found');
+  }
+
+  const projectContract = getProjectContract(web3, address);
+  const receipt = await projectContract.methods
+    .withdrawFunds(milestoneIndex)
+    .send({
+      from: accountAddress,
+      gas: '3000000',
+    });
+
+  console.log('Milestone Withdrawn');
+  console.log('Transaction Receipt:', receipt);
 }

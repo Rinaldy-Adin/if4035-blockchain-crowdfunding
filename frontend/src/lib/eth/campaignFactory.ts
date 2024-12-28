@@ -4,7 +4,7 @@ import { ContributionHistoryItem, ProjectSummary } from '@/interfaces/project';
 import { getProjectSummary } from '@/lib/eth/campaign.ts';
 import dayjs from 'dayjs';
 
-export const FACTORY_ADDRESS = '0x5fbdb2315678afecb367f032d93f642f64180aa3';
+const FACTORY_ADDRESS = '0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512';
 
 export function getProjectFactoryContract(web3: Web3) {
   try {
@@ -56,11 +56,9 @@ export async function getDeployedProjects(
     const projectAddresses: string[] = await projectFactory.methods
       .getDeployedProjects()
       .call();
-    console.log('Project Addresses:', projectAddresses);
 
     const projectSummaries: ProjectSummary[] = await Promise.all(
       projectAddresses.map(async (address): Promise<ProjectSummary> => {
-        console.log(web3.eth);
         return getProjectSummary(web3, address);
       })
     );

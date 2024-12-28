@@ -32,8 +32,6 @@ async function requestRandomNumber(): Promise<number> {
 async function main() {
   const [dataProvider] = await ethers.getSigners();
 
-  console.log(dataProvider);
-
   const oracleContractAddress = "0x5FbDB2315678afecb367f032d93F642f64180aa3";
 
   const oracleContract = new ethers.Contract(
@@ -65,8 +63,11 @@ async function main() {
         try {
           const randomNumber = await requestRandomNumber();
 
-          // Assuming submitVerification accepts these arguments
-          await oracleContract.submitVerification(request.id, randomNumber);
+          // even random number means the milestone is verified, this is dummy logic
+          await oracleContract.submitVerification(
+            request.id,
+            randomNumber % 2 === 0
+          );
           break;
         } catch (error) {
           retries++;
@@ -78,34 +79,28 @@ async function main() {
     }
   }, SLEEP_TIME);
 
-  // Handle cleanup on SIGTERM (Ctrl+C)
-  process.on("SIGTERM", async () => {
-    console.log("SIGTERM received. Cleaning up...");
-    clearInterval(intervalId); // Stop the interval
-
+  const onExit = async () => {
+    console.log("Exiting...");
+    clearInterval(intervalId);
     try {
       await oracleContract.removeProvider(dataProvider.address);
       console.log("Provider removed successfully.");
     } catch (error) {
       console.error("Error removing provider:", error);
     }
+  };
 
-    process.exit(0); // Exit the process
+  process.on("SIGTERM", async () => {
+    await onExit();
+    process.exit(0);
   });
 
   process.on("SIGINT", async () => {
-    console.log("SIGINT received. Cleaning up...");
-    clearInterval(intervalId); // Stop the interval
-
-    try {
-      await oracleContract.removeProvider(dataProvider.address);
-      console.log("Provider removed successfully.");
-    } catch (error) {
-      console.error("Error removing provider:", error);
-    }
-
-    process.exit(0); // Exit the process
+    await onExit();
+    process.exit(0);
   });
+
+  console.log("Provider started successfully. 🚀");
 }
 
 main().catch((error) => {

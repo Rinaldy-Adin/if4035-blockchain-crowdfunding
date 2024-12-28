@@ -1,10 +1,13 @@
 import { Milestone } from '@/interfaces/project';
 import { Button } from '@/components/ui/button.tsx';
 import { useAuthContext } from '@/context/auth-context.tsx';
-import { useMutation } from '@tanstack/react-query';
-import { verifyProjectMilestone } from '@/lib/eth/campaign.ts';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import {
+  verifyProjectMilestone,
+  withdrawFundsFromProject,
+} from '@/lib/eth/campaign.ts';
 import { toast } from '@/hooks/use-toast.ts';
-import { useEffect, useMemo } from 'react';
+import { useMemo } from 'react';
 import { CheckIcon, Clock1Icon, FlagIcon } from 'lucide-react';
 import { Badge } from '@/components/ui/badge.tsx';
 
@@ -21,26 +24,24 @@ export const MilestoneCard = ({
   milestoneIndex,
   projectManager,
 }: MilestoneCardProps) => {
-  const { web3, userAcc } = useAuthContext();
+  const { web3, userAcc, isLoading: isAuthLoading } = useAuthContext();
 
-  useEffect(() => {
-    console.log('userAcc', userAcc);
-    console.log('projectManager', projectManager);
-    console.log('projectAddress', projectAddress);
-  }, [userAcc, projectManager]);
+  const queryClient = useQueryClient();
 
   const verifyMilestoneMutation = useMutation({
     mutationFn: async () => {
       if (!web3 || !projectAddress) {
         throw new Error('No web3 instance found');
       }
-      console.log(web3, projectAddress, milestoneIndex);
       await verifyProjectMilestone(
         web3,
         projectAddress,
         milestoneIndex,
         userAcc
       );
+      queryClient.invalidateQueries({
+        queryKey: ['projectDetail', projectAddress, isAuthLoading],
+      });
     },
     onError: (err) => {
       toast({
@@ -51,7 +52,36 @@ export const MilestoneCard = ({
     onSuccess: () => {
       toast({
         title: 'Success',
-        description: `Milestone ${milestoneIndex} verified successfully!`,
+        description: `Milestone ${milestoneIndex} verification requested!`,
+      });
+    },
+  });
+
+  const withdrawFundsMutation = useMutation({
+    mutationFn: async () => {
+      if (!web3 || !projectAddress) {
+        throw new Error('No web3 instance found');
+      }
+      await withdrawFundsFromProject(
+        web3,
+        projectAddress,
+        milestoneIndex,
+        userAcc
+      );
+    },
+    onError: (err) => {
+      toast({
+        variant: 'destructive',
+        description: `Error withdrawing funds: ${err}`,
+      });
+    },
+    onSuccess: () => {
+      toast({
+        title: 'Success',
+        description: `Funds withdrawn successfully!`,
+      });
+      queryClient.invalidateQueries({
+        queryKey: ['projectDetail', projectAddress, isAuthLoading],
       });
     },
   });
@@ -67,6 +97,12 @@ export const MilestoneCard = ({
       !verifyMilestoneMutation.isPending
     );
   }, [milestone.lastVerificationRequest, milestone.verified]);
+
+  const isWithdrawalAllowed =
+    milestone.verified &&
+    !withdrawFundsMutation.isPending &&
+    !milestone.withdrawn &&
+    milestone.achieved >= milestone.goal;
 
   return (
     <div
@@ -92,6 +128,11 @@ export const MilestoneCard = ({
                 Completion Pending
               </Badge>
             )}
+            {milestone.withdrawn && (
+              <Badge className="flex gap-2 items-center bg-primary/20 text-primary font-medium">
+                <CheckIcon className="size-4" /> Withdrawn
+              </Badge>
+            )}
           </div>
         </div>
         <p className="text-gray-700">{milestone.description}</p>
@@ -100,7 +141,7 @@ export const MilestoneCard = ({
           <p className="font-semibold">💰{milestone.goal} ETH</p>
         </div>
         <div className="flex w-full justify-between items-center">
-          <p className="mt-2 text-muted-foreground font-light">Withdrawn</p>
+          <p className="mt-2 text-muted-foreground font-light">Achieved</p>
           <p className="font-semibold text-green-600">
             💰{milestone.achieved || 0} ETH
           </p>
@@ -116,8 +157,14 @@ export const MilestoneCard = ({
                 ? 'Requesting Verification... 🚀'
                 : 'Request Verification 🚀'}
             </Button>
-            <Button variant="secondary" disabled={!milestone.verified}>
-              Withdraw Funds 💳
+            <Button
+              variant="secondary"
+              disabled={!isWithdrawalAllowed}
+              onClick={() => withdrawFundsMutation.mutate()}
+            >
+              {withdrawFundsMutation.isPending
+                ? 'Withdrawing Funds...🤑'
+                : 'Withdraw Funds 💳'}
             </Button>
           </div>
         )}

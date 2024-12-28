@@ -1,71 +1,54 @@
 import { Layout } from '@/layouts/layout.tsx';
-import { Project, ProjectContributionItem } from '@/interfaces/project';
-import { useAuthContext } from '@/context/auth-context.tsx';
-import { useEffect, useState } from 'react';
-import { getProjectContributions, getProjectDetail } from '@/lib/eth/campaign.ts';
-import { useParams } from 'react-router-dom';
 import { Progress } from '@/components/ui/progress.tsx';
 import { Button } from '@/components/ui/button.tsx';
 import { MilestoneCard } from '@/components/projects/milestone-card.tsx';
 import { LoadingPage } from '@/components/loading-page.tsx';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { toast } from '@/hooks/use-toast';
 import CurrencyInput from 'react-currency-input-field';
 import { MS_DECIMAL_LIMIT } from '@/components/projects/new-project-form';
 import { contributeToProject } from '@/lib/eth/campaignFactory';
 import { ProjectContributionCard } from '@/components/projects/project-contributions-card';
+import { useAuthContext } from '@/context/auth-context';
+import { useNavigate, useParams } from 'react-router-dom';
+import { useState } from 'react';
+import { getProjectContributions, getProjectDetail } from '@/lib/eth/campaign';
 
 export const ProjectDetail = () => {
-  const { web3, userAcc } = useAuthContext();
+  const { web3, userAcc, isLoading: isAuthLoading } = useAuthContext();
   const { address } = useParams();
-  const [project, setProject] = useState<Project>();
-  const [contributions, setContribution] = useState<ProjectContributionItem[]>();
-  const [totalGoal, setTotalGoal] = useState(0);
-  const [loading, setLoading] = useState<boolean>(true);
   const [isContribExpanded, setContribExpanded] = useState<boolean>(false);
   const [contributionAmount, setContributionAmount] = useState<string>("");
   const [contributionError, setContributionError] = useState<string>("");
+  const navigate = useNavigate();
 
-  const fetchProject = async () => {
-    try {
+  const {
+    data: queryData,
+    isLoading: loading,
+    refetch,
+  } = useQuery({
+    queryKey: ['projectDetail', address, isAuthLoading],
+    queryFn: () => {
+      if (isAuthLoading) {
+        return null;
+      }
       if (web3 && address) {
         const projectDetailPromise = getProjectDetail(web3, address);
         const projectContributionsPromise = getProjectContributions(web3, address);
 
-        const [projectDetail, projectContributions] = await Promise.all([projectDetailPromise, projectContributionsPromise]);
-
-        console.log(projectDetail);
-        setProject(projectDetail);
-        setTotalGoal(
-          projectDetail.milestones.reduce(
-            (acc, milestone) => acc + milestone.goal,
-            0
-          )
-        );
-
-        console.log(projectContributions);
-        setContribution(projectContributions.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime()));
-
-        setLoading(false);
+        return Promise.all([projectDetailPromise, projectContributionsPromise]);
       }
-    } catch (error) {
-      console.error('Error fetching project:', error);
-      setLoading(false);
-    }
-  };
+      navigate('/');
+      return null;
+    },
+  });
 
-  useEffect(() => {
-    let isMounted = true;
+  const project = queryData ? queryData[0] : null;
+  const contributions = queryData ? queryData[1].sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime()) : null;
 
-    if (isMounted) {
-      fetchProject();
-    }
-
-    return () => {
-      isMounted = false;
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [web3, address]);
+  const totalGoal =
+    project?.milestones.reduce((acc, milestone) => acc + milestone.goal, 0) ||
+    0;
 
   const contributeToProjectMutation = useMutation({
     mutationFn: async (amountStr: string) => {
@@ -78,23 +61,22 @@ export const ProjectDetail = () => {
         );
       }
     },
-    onError: (err) => {
+    onError: async (err) => {
       toast({
         variant: 'destructive',
         title: 'Unexpected Error Occurred 😰',
         description: `Error contributing to project: ${err}`,
       });
-      fetchProject();
+      await refetch();
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       toast({
         title: 'Success',
-        description: `Successfully contributed to ${project?.name}!`,
+        description: `Successfully contributed to ${project?.name}! 🎉`,
       });
-      fetchProject();
-      setContributionError("");
+      await refetch();
+      setContributionAmount('');
       setContribExpanded(false);
-      setContributionAmount("");
     },
   });
 
@@ -118,7 +100,7 @@ export const ProjectDetail = () => {
     }
   }
 
-  if (loading) {
+  if (loading || isAuthLoading) {
     return <LoadingPage />;
   }
 
@@ -154,9 +136,14 @@ export const ProjectDetail = () => {
           <div className="text-center">
             <p className="text-lg">
               <span className="font-semibold text-green-600">
-                Total Funds: {web3?.utils.fromWei(project?.totalFund ?? 0, 'ether')}
+                Total Funds:{' '}
+                {web3?.utils.fromWei(project?.totalFund ?? 0, 'ether')} ETH
               </span>{' '}
-              /<span className="text-gray-800"> Total Goals: {totalGoal}</span>
+              /
+              <span className="text-gray-800">
+                {' '}
+                Total Goals: {totalGoal} ETH
+              </span>
             </p>
           </div>
           {isContribExpanded ? (
@@ -165,19 +152,32 @@ export const ProjectDetail = () => {
                 <p className="font-semibold">ETH</p>
                 <CurrencyInput
                   className="flex h-9 flex-1 rounded-2xl border border-input bg-white px-3 py-1 text-base shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
-                  placeholder="Enter your milestone goal here"
+                  placeholder="Enter your contribution amount here"
                   decimalsLimit={MS_DECIMAL_LIMIT}
                   value={contributionAmount}
                   onValueChange={(value) => {
-                    setContributionAmount(value ?? "");
+                    setContributionAmount(value ?? '');
                   }}
                 />
-                <Button onClick={() => { onSubmitContribution(contributionAmount) }}>Contribute</Button>
+                <Button
+                  onClick={() => {
+                    onSubmitContribution(contributionAmount);
+                  }}
+                >
+                  Contribute
+                </Button>
               </div>
               {contributionError && (<p className='text-sm text-destructive'>{contributionError}</p>)}
             </div>
           ) : (
-            <Button onClick={() => { setContribExpanded(true) }} className="w-full">Contribute</Button>
+            <Button
+              onClick={() => {
+                setContribExpanded(true);
+              }}
+              className="w-full"
+            >
+              Contribute
+            </Button>
           )}
           <div className="flex flex-col gap-1 items-stretch">
             {contributions?.map((contribution) => (
@@ -199,6 +199,6 @@ export const ProjectDetail = () => {
           ))}
         </div>
       </div>
-    </Layout >
+    </Layout>
   );
 };

@@ -1,7 +1,7 @@
 participants:
-  #- el_type: geth
-    #cl_type: lighthouse
-    #count: 2
+#  - el_type: geth
+#    cl_type: lighthouse
+#    count: 2
   - el_type: geth
     cl_type: teku
 network_params:

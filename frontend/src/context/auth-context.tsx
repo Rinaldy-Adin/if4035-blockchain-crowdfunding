@@ -29,6 +29,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
 }) => {
   const [address, setAddress] = useState<string | null>(null);
   const [web3, setWeb3] = useState<Web3 | null>(null);
+  const handleAccountsChanged = (accounts: string[]) => {
+    if (accounts.length === 0) {
+      setAddress(null);
+    } else {
+      setAddress(accounts[0]);
+      setWeb3(new Web3(window.ethereum));
+    }
+  };
 
   const { isLoading } = useQuery({
     queryFn: async () => {
@@ -44,8 +52,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
         if (accounts.length === 0) {
           return;
         }
-
-        setAddress(accounts[0]);
+        handleAccountsChanged(accounts);
       } catch (error) {
         console.error('error', error);
       }
@@ -56,28 +63,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   // Handle account changes
   useEffect(() => {
     if (!window?.ethereum) return;
-
-    const handleAccountsChanged = (accounts: string[]) => {
-      if (accounts.length === 0) {
-        setAddress(null);
-      } else {
-        setAddress(accounts[0]);
-      }
-    };
-
     window.ethereum.on('accountsChanged', handleAccountsChanged);
-
     return () => {
       window.ethereum?.removeListener('accountsChanged', handleAccountsChanged);
     };
   }, []);
-
-  useEffect(() => {
-    if (address) {
-      const web3Instance = new Web3(window.ethereum);
-      setWeb3(web3Instance);
-    }
-  }, [address]);
 
   const contextValue: AuthContextType = {
     userAcc: address,
