@@ -85,13 +85,24 @@ export const ProjectDetail = () => {
       const balanceInWei = await web3.eth.getBalance(userAcc);
       const balanceInEther = parseFloat(web3.utils.fromWei(balanceInWei, "ether"));
 
-      if (balanceInEther < parseFloat(amountStr)) {
+      const parsedAmount = parseFloat(amountStr);
+      if (isNaN(parsedAmount) || !isFinite(parsedAmount)) {
+        setContributionError("Amount not a number");
+        return
+      }
+
+      if (parsedAmount <= 0) {
+        setContributionError("Amount must be greater than 0");
+        return
+      }
+
+      if (balanceInEther < parsedAmount) {
         setContributionError("Insufficient balance for contribution");
         return
       }
 
       const totalFund = parseFloat(web3.utils.fromWei(project.totalFund, "ether"));
-      if (totalFund + parseFloat(amountStr) > totalGoal) {
+      if (totalFund + parsedAmount > totalGoal) {
         setContributionError("Total contributions must not exceed total goal");
         return
       }

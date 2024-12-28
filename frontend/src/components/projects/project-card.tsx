@@ -31,7 +31,7 @@ export const ProjectCard = ({ project }: { project: ProjectSummary }) => {
           {project.backersCount} contributor(s)
         </p>
         <p className="text-sm text-gray-800 font-medium">
-          {web3.utils.fromWei(project.totalFunds, "ether")} ETH out of {project.totalGoals} ETH
+          {project.totalFunds} ETH out of {project.totalGoals} ETH
         </p>
       </div>
     </Card>
