@@ -22,48 +22,48 @@ export const ProjectDetail = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [isContribExpanded, setContribExpanded] = useState<boolean>(false);
   const [contributionAmount, setContributionAmount] = useState<string>("");
+  const [contributionError, setContributionError] = useState<string>("");
+
+  const fetchProject = async () => {
+    try {
+      if (web3 && address) {
+        const projectDetail = await getProjectDetail(web3, address);
+        console.log(projectDetail);
+        setProject(projectDetail);
+        setTotalGoal(
+          projectDetail.milestones.reduce(
+            (acc, milestone) => acc + milestone.goal,
+            0
+          )
+        );
+        setLoading(false);
+      }
+    } catch (error) {
+      console.error('Error fetching project:', error);
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     let isMounted = true;
 
-    const fetchProjects = async () => {
-      try {
-        if (web3 && address) {
-          const projectDetail = await getProjectDetail(web3, address);
-          console.log(projectDetail);
-          if (isMounted) {
-            setProject(projectDetail);
-            setTotalGoal(
-              projectDetail.milestones.reduce(
-                (acc, milestone) => acc + milestone.goal,
-                0
-              )
-            );
-            setLoading(false);
-          }
-        }
-      } catch (error) {
-        if (isMounted) {
-          console.error('Error fetching project:', error);
-          setLoading(false);
-        }
-      }
-    };
-
-    fetchProjects();
+    if (isMounted) {
+      fetchProject();
+    }
 
     return () => {
       isMounted = false;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [web3, address]);
 
   const contributeToProjectMutation = useMutation({
-    mutationFn: async (amount: string) => {
+    mutationFn: async (amountStr: string) => {
       if (web3 && userAcc && address) {
         await contributeToProject(
           web3,
           address,
-          amount,
+          amountStr,
           userAcc,
         );
       }
@@ -74,14 +74,36 @@ export const ProjectDetail = () => {
         title: 'Unexpected Error Occurred 😰',
         description: `Error contributing to project: ${err}`,
       });
+      fetchProject();
     },
     onSuccess: () => {
       toast({
         title: 'Success',
         description: `Successfully contributed to ${project?.name}!`,
       });
+      fetchProject();
     },
   });
+
+  const onSubmitContribution = async (amountStr: string) => {
+    if (web3 && userAcc && project) {
+      const balanceInWei = await web3.eth.getBalance(userAcc);
+      const balanceInEther = parseFloat(web3.utils.fromWei(balanceInWei, "ether"));
+
+      if (balanceInEther < parseFloat(amountStr)) {
+        setContributionError("Insufficient balance for contribution");
+        return
+      }
+
+      const totalFund = parseFloat(web3.utils.fromWei(project.totalFund, "ether"));
+      if (totalFund + parseFloat(amountStr) > totalGoal) {
+        setContributionError("Total contributions must not exceed total goal");
+        return
+      }
+
+      contributeToProjectMutation.mutate(amountStr);
+    }
+  }
 
   if (loading) {
     return <LoadingPage />;
@@ -124,21 +146,24 @@ export const ProjectDetail = () => {
               /<span className="text-gray-800"> Total Goals: {totalGoal}</span>
             </p>
           </div>
-          {isContribExpanded ? (<div>
-            <div className="flex items-center gap-3">
-              <p className="font-semibold">ETH</p>
-              <CurrencyInput
-                className="flex h-9 flex-1 rounded-2xl border border-input bg-white px-3 py-1 text-base shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
-                placeholder="Enter your milestone goal here"
-                decimalsLimit={MS_DECIMAL_LIMIT}
-                value={contributionAmount}
-                onValueChange={(value) => {
-                  setContributionAmount(value ?? "");
-                }}
-              />
-              <Button onClick={() => { contributeToProjectMutation.mutate(contributionAmount) }}>Contribute</Button>
+          {isContribExpanded ? (
+            <div>
+              <div className="flex items-center gap-3">
+                <p className="font-semibold">ETH</p>
+                <CurrencyInput
+                  className="flex h-9 flex-1 rounded-2xl border border-input bg-white px-3 py-1 text-base shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+                  placeholder="Enter your milestone goal here"
+                  decimalsLimit={MS_DECIMAL_LIMIT}
+                  value={contributionAmount}
+                  onValueChange={(value) => {
+                    setContributionAmount(value ?? "");
+                  }}
+                />
+                <Button onClick={() => { onSubmitContribution(contributionAmount) }}>Contribute</Button>
+              </div>
+              {contributionError && (<p className='text-sm text-destructive'>{contributionError}</p>)}
             </div>
-          </div>) : (
+          ) : (
             <Button onClick={() => { setContribExpanded(true) }} className="w-full">Contribute</Button>
           )}
         </div>

@@ -22,6 +22,7 @@ import { useState } from 'react';
 import { Badge } from '@/components/ui/badge.tsx';
 import { Separator } from '@/components/ui/separator.tsx';
 import { MilestoneIcon, Text, XIcon } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 export const MS_DECIMAL_LIMIT = 6;
 
@@ -58,6 +59,7 @@ type newProjectFormType = z.infer<typeof newProjectFormSchema>;
 export default function NewProjectForm() {
   const { web3, userAcc } = useAuthContext();
   const [file, setFile] = useState<File | null>(null);
+  const navigate = useNavigate();
 
   const form = useForm<newProjectFormType>({
     resolver: zodResolver(newProjectFormSchema),
@@ -134,6 +136,7 @@ export default function NewProjectForm() {
         title: 'Success',
         description: `Project created successfully!`,
       });
+      navigate(`/`);
     },
   });
 

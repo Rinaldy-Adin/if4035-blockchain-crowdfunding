@@ -10,6 +10,7 @@ contract Project {
     string public description;
     string public imageCid;
     uint256 public totalFunds;
+    uint256 public totalGoal;
 
     struct Milestone {
         string name;
@@ -59,9 +60,12 @@ contract Project {
             "Invalid milestones input"
         );
 
+        totalGoal = 0;
         for (uint256 i = 0; i < milestoneNames.length; i++) {
             require(milestoneGoals[i] > 0, "Milestone goals must be greater than 0");
+            totalGoal += milestoneGoals[i];
         }
+
         manager = creator;
         name = _name;
         description = _description;
@@ -85,6 +89,7 @@ contract Project {
 
     function receiveContribution(address contributor) external payable {
         require(msg.value > 0, "Contribution must be greater than 0");
+        require(msg.value + totalFunds <= totalGoal, "Contribution must not exceed project goal");
         require(msg.sender == factoryAddress, "Only the factory can forward contributions");
 
         if (contributions[contributor] == 0) {
