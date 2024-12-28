@@ -142,9 +142,6 @@ contract Project {
             "Too soon to request verification again"
         );
 
-        console.log("calling oracle");
-        console.log(oracleAddress);
-
         IOracle oracle = IOracle(oracleAddress);
         uint256 requestId = oracle.requestMilestoneVerification(address(this), index);
         requestToMilestone[requestId] = index;
@@ -160,7 +157,6 @@ contract Project {
         require(milestone.verificationRequestId == requestId, "Invalid request ID");
         require(!milestone.verified, "Milestone already verified");
 
-        // Check if the caller is the oracle
         require(msg.sender == oracleAddress, "Caller is not the registered oracle");
 
         milestone.verified = verified;
