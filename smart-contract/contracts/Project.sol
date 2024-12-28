@@ -32,6 +32,7 @@ contract Project {
     address public oracleAddress = 0x5FbDB2315678afecb367f032d93F642f64180aa3;
     address public factoryAddress;
 
+    event ContributionMade(address indexed backer, uint256 amount);
     event MilestoneUpdated(uint256 milestoneIndex, uint256 achievedAmount);
     event MilestoneVerificationChanged(uint256 milestoneIndex, bool verified);
     event FundsWithdrawn(address manager, uint256 amount);
@@ -111,6 +112,8 @@ contract Project {
                 emit MilestoneUpdated(i, milestone.achieved);
             }
         }
+
+        emit ContributionMade(contributor, msg.value);
     }
 
     function withdrawFunds(uint256 index) public restricted {

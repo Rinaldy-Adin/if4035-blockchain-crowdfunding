@@ -8,7 +8,7 @@ contract ProjectFactory {
     address[] public deployedProjects;
 
     event ProjectCreated(address campaignAddress, address creator, string name, string description);
-    event ContributionMade(address indexed project, address indexed backer, uint256 amount);
+    event ContributionMade(address indexed project, string projectName, uint256 timestamp, address indexed backer, uint256 amount);
 
     function createProject(
         string memory _name,
@@ -43,6 +43,8 @@ contract ProjectFactory {
         Project project = Project(projectAddress);
         project.receiveContribution{value: msg.value}(msg.sender);
 
-        emit ContributionMade(projectAddress, msg.sender, msg.value);
+        string memory projectName = project.name();
+
+        emit ContributionMade(projectAddress, projectName, block.timestamp, msg.sender, msg.value);
     }
 }

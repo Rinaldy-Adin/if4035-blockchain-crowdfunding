@@ -2,6 +2,7 @@ import { Card } from '@/components/ui/card.tsx';
 import { ProjectSummary } from '@/interfaces/project';
 import { Progress } from '@/components/ui/progress.tsx';
 import { useEffect } from 'react';
+import web3 from 'web3';
 
 export const ProjectCard = ({ project }: { project: ProjectSummary }) => {
   useEffect(() => {
@@ -34,7 +35,7 @@ export const ProjectCard = ({ project }: { project: ProjectSummary }) => {
           {project.backersCount} contributor(s)
         </p>
         <p className="text-sm text-gray-800 font-medium">
-          {project.totalFunds} ETH out of {project.totalGoals} ETH
+          {web3.utils.fromWei(project.totalFunds, "ether")} ETH out of {project.totalGoals} ETH
         </p>
       </div>
     </Card>

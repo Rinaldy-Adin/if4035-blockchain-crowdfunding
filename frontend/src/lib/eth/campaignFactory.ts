@@ -1,7 +1,8 @@
 import Web3, { EventLog } from 'web3';
 import ProjectKickstarterApp from '../../abi/ProjectFactory.abi.json';
-import { ProjectSummary } from '@/interfaces/project';
+import { ContributionHistoryItem, ProjectSummary } from '@/interfaces/project';
 import { getProjectSummary } from '@/lib/eth/campaign.ts';
+import dayjs from 'dayjs';
 
 export const FACTORY_ADDRESS = '0x5fbdb2315678afecb367f032d93f642f64180aa3';
 
@@ -104,7 +105,7 @@ export async function contributeToProject(
 export async function getUserContributions(
   web3: Web3,
   userAddress: string
-) {
+): Promise<ContributionHistoryItem[]> {
   const factoryContract = getProjectFactoryContract(web3);
 
   // "allEvents" typecast done to ignore error as .getPastEvents has outdated typescript definition
@@ -114,12 +115,11 @@ export async function getUserContributions(
     toBlock: "latest",
   })) as EventLog[];
 
-  console.log(events);
-
   return events.map((event) => ({
-    project: event.returnValues.project,
-    backer: event.returnValues.backer,
-    amount: web3.utils.fromWei(event.returnValues.amount as number, "ether"),
-    transactionHash: event.transactionHash,
+    projectAddress: event.returnValues.project as string,
+    projectName: event.returnValues.projectName as string,
+    backerAddress: event.returnValues.backer as string,
+    amount: web3.utils.fromWei((event.returnValues.amount as bigint).toString(), "ether"),
+    timestamp: dayjs.unix(Number(event.returnValues.timestamp)).toDate(),
   }));
 }
