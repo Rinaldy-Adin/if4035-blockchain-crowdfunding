@@ -3,7 +3,8 @@
   "version": "1.0.0",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "export:abi": "node scripts/exportABI.js"
+    "export:abi": "node scripts/exportABI.js",
+    "deploy:local": "npx hardhat compile && npx hardhat ignition deploy ignition/modules/ProjectFactory.ts --network localhost"
   },
   "keywords": [],
   "author": "",
