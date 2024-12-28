@@ -5,11 +5,11 @@ import { useAuthContext } from '@/context/auth-context.tsx';
 import { useEffect, useState } from 'react';
 import { getDeployedProjects } from '@/lib/eth/campaignFactory.ts';
 import { Link } from 'react-router-dom';
-import { Button } from '@/components/ui/button.tsx';
 import { NoWalletDetected } from '@/components/home/no-wallet-detected.tsx';
 import { LoadingPage } from '@/components/loading-page.tsx';
 import { LoadingIcon } from '@/components/ui/loading-icon.tsx';
 import { SearchIcon } from 'lucide-react';
+import { HeaderCard } from '@/components/home/header-card.tsx';
 
 export const Home = () => {
   const { web3, isLoading: isAuthLoading } = useAuthContext();
@@ -56,7 +56,7 @@ export const Home = () => {
     <Layout>
       {/* Title Section */}
       <div className="flex flex-col items-center text-center mt-6 mb-4">
-        <h1 className="text-3xl font-bold mb-4">Project Kickstarter</h1>
+        <HeaderCard />
         {/* Search Bar */}
         {/*<div className="w-full max-w-md">*/}
         {/*  <Input*/}
@@ -65,10 +65,11 @@ export const Home = () => {
         {/*  />*/}
         {/*</div>*/}
         {/*  Button new project at right side */}
-        <div className="w-full flex justify-end">
-          <Link to="/project/new">
-            <Button>New Project</Button>
-          </Link>
+        <div className="w-full mt-6 flex justify-center items-center text-xl font-semibold">
+          <p>
+            👇 ...or <span className="text-primary font-bold">Contribute</span>{' '}
+            to Projects 👇
+          </p>
         </div>
       </div>
 
