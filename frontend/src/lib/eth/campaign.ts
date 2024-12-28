@@ -1,6 +1,7 @@
-import Web3 from 'web3';
+import Web3, { EventLog } from 'web3';
 import ProjectABI from '../../abi/Project.abi.json';
-import { Milestone, Project, ProjectSummary } from '@/interfaces/project';
+import { Milestone, Project, ProjectContributionItem, ProjectSummary } from '@/interfaces/project';
+import dayjs from 'dayjs';
 
 export function getProjectContract(web3: Web3, address: string) {
   try {
@@ -86,4 +87,23 @@ export async function verifyProjectMilestone(
 
   console.log('Milestone Verification Requested');
   console.log('Transaction Receipt:', receipt);
+}
+
+export async function getProjectContributions(
+  web3: Web3,
+  projectAddress: string,
+): Promise<ProjectContributionItem[]> {
+  const projectContract = getProjectContract(web3, projectAddress);
+
+  // "allEvents" typecast done to ignore error as .getPastEvents has outdated typescript definition
+  const events = (await projectContract.getPastEvents("ContributionMade" as "allEvents", {
+    fromBlock: 0,
+    toBlock: "latest",
+  })) as EventLog[];
+
+  return events.map((event) => ({
+    backerAddress: event.returnValues.backer as string,
+    amount: web3.utils.fromWei((event.returnValues.amount as bigint).toString(), "ether"),
+    timestamp: dayjs.unix(Number(event.returnValues.timestamp)).toDate(),
+  }));
 }

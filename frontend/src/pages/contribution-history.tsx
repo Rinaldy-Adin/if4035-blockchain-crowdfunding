@@ -49,7 +49,7 @@ export const ContributionHistory = () => {
   return (
     <Layout>
       {/* Title Section */}
-      <div className="flex flex-col items-stretc text-center mt-6 mb-4">
+      <div className="flex flex-col items-stretch text-center mt-6 mb-4">
         <h1 className="text-3xl font-bold mb-4">Contribution History</h1>
 
         {/* Grid of Projects */}

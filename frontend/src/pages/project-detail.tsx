@@ -1,8 +1,8 @@
 import { Layout } from '@/layouts/layout.tsx';
-import { Project } from '@/interfaces/project';
+import { Project, ProjectContributionItem } from '@/interfaces/project';
 import { useAuthContext } from '@/context/auth-context.tsx';
 import { useEffect, useState } from 'react';
-import { getProjectDetail } from '@/lib/eth/campaign.ts';
+import { getProjectContributions, getProjectDetail } from '@/lib/eth/campaign.ts';
 import { useParams } from 'react-router-dom';
 import { Progress } from '@/components/ui/progress.tsx';
 import { Button } from '@/components/ui/button.tsx';
@@ -13,11 +13,13 @@ import { toast } from '@/hooks/use-toast';
 import CurrencyInput from 'react-currency-input-field';
 import { MS_DECIMAL_LIMIT } from '@/components/projects/new-project-form';
 import { contributeToProject } from '@/lib/eth/campaignFactory';
+import { ProjectContributionCard } from '@/components/projects/project-contributions-card';
 
 export const ProjectDetail = () => {
   const { web3, userAcc } = useAuthContext();
   const { address } = useParams();
   const [project, setProject] = useState<Project>();
+  const [contributions, setContribution] = useState<ProjectContributionItem[]>();
   const [totalGoal, setTotalGoal] = useState(0);
   const [loading, setLoading] = useState<boolean>(true);
   const [isContribExpanded, setContribExpanded] = useState<boolean>(false);
@@ -27,7 +29,11 @@ export const ProjectDetail = () => {
   const fetchProject = async () => {
     try {
       if (web3 && address) {
-        const projectDetail = await getProjectDetail(web3, address);
+        const projectDetailPromise = getProjectDetail(web3, address);
+        const projectContributionsPromise = getProjectContributions(web3, address);
+
+        const [projectDetail, projectContributions] = await Promise.all([projectDetailPromise, projectContributionsPromise]);
+
         console.log(projectDetail);
         setProject(projectDetail);
         setTotalGoal(
@@ -36,6 +42,10 @@ export const ProjectDetail = () => {
             0
           )
         );
+
+        console.log(projectContributions);
+        setContribution(projectContributions.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime()));
+
         setLoading(false);
       }
     } catch (error) {
@@ -169,6 +179,11 @@ export const ProjectDetail = () => {
           ) : (
             <Button onClick={() => { setContribExpanded(true) }} className="w-full">Contribute</Button>
           )}
+          <div className="flex flex-col gap-1 items-stretch">
+            {contributions?.map((contribution) => (
+              <ProjectContributionCard contribution={contribution} />
+            ))}
+          </div>
         </div>
 
         {/* Milestones */}

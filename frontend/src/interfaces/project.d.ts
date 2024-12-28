@@ -34,3 +34,9 @@ export type ContributionHistoryItem = {
   backerAddress: string;
   amount: string;
 };
+
+export type ProjectContributionItem = {
+  backerAddress: string;
+  amount: string;
+  timestamp: Date;
+};
