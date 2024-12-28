@@ -82,6 +82,9 @@ export const ProjectDetail = () => {
         description: `Successfully contributed to ${project?.name}!`,
       });
       fetchProject();
+      setContributionError("");
+      setContribExpanded(false);
+      setContributionAmount("");
     },
   });
 
