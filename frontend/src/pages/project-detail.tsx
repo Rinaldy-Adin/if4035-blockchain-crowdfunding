@@ -1,70 +1,49 @@
 import { Layout } from '@/layouts/layout.tsx';
-import { Project } from '@/interfaces/project';
 import { useAuthContext } from '@/context/auth-context.tsx';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { contributeToProject, getProjectDetail } from '@/lib/eth/campaign.ts';
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { Progress } from '@/components/ui/progress.tsx';
 import { Button } from '@/components/ui/button.tsx';
 import { MilestoneCard } from '@/components/projects/milestone-card.tsx';
 import { LoadingPage } from '@/components/loading-page.tsx';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { toast } from '@/hooks/use-toast';
 import CurrencyInput from 'react-currency-input-field';
 import { MS_DECIMAL_LIMIT } from '@/components/projects/new-project-form';
 
 export const ProjectDetail = () => {
-  const { web3, userAcc } = useAuthContext();
+  const { web3, userAcc, isLoading: isAuthLoading } = useAuthContext();
   const { address } = useParams();
-  const [project, setProject] = useState<Project>();
-  const [totalGoal, setTotalGoal] = useState(0);
-  const [loading, setLoading] = useState<boolean>(true);
   const [isContribExpanded, setContribExpanded] = useState<boolean>(false);
-  const [contributionAmount, setContributionAmount] = useState<string>("");
-
-  useEffect(() => {
-    let isMounted = true;
-
-    const fetchProjects = async () => {
-      try {
-        if (web3 && address) {
-          const projectDetail = await getProjectDetail(web3, address);
-          console.log(projectDetail);
-          if (isMounted) {
-            setProject(projectDetail);
-            setTotalGoal(
-              projectDetail.milestones.reduce(
-                (acc, milestone) => acc + milestone.goal,
-                0
-              )
-            );
-            setLoading(false);
-          }
-        }
-      } catch (error) {
-        if (isMounted) {
-          console.error('Error fetching project:', error);
-          setLoading(false);
-        }
+  const [contributionAmount, setContributionAmount] = useState<string>('');
+  const navigate = useNavigate();
+  const {
+    data: project,
+    isLoading: loading,
+    refetch,
+  } = useQuery({
+    queryKey: ['projectDetail', address, isAuthLoading],
+    queryFn: () => {
+      if (isAuthLoading) {
+        return null;
       }
-    };
+      if (web3 && address) {
+        return getProjectDetail(web3, address);
+      }
+      navigate('/');
+      return null;
+    },
+  });
 
-    fetchProjects();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [web3, address]);
+  const totalGoal =
+    project?.milestones.reduce((acc, milestone) => acc + milestone.goal, 0) ||
+    0;
 
   const contributeToProjectMutation = useMutation({
     mutationFn: async (amount: string) => {
       if (web3 && userAcc && address) {
-        await contributeToProject(
-          web3,
-          address,
-          amount,
-          userAcc,
-        );
+        await contributeToProject(web3, address, amount, userAcc);
       }
     },
     onError: (err) => {
@@ -74,15 +53,17 @@ export const ProjectDetail = () => {
         description: `Error contributing to project: ${err}`,
       });
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       toast({
         title: 'Success',
-        description: `Successfully contributed to ${project?.name}!`,
+        description: `Successfully contributed to ${project?.name}! 🎉`,
       });
+      await refetch();
+      setContributionAmount('');
     },
   });
 
-  if (loading) {
+  if (loading || isAuthLoading) {
     return <LoadingPage />;
   }
 
@@ -118,27 +99,47 @@ export const ProjectDetail = () => {
           <div className="text-center">
             <p className="text-lg">
               <span className="font-semibold text-green-600">
-                Total Funds: {web3?.utils.fromWei(project?.totalFund ?? 0, 'ether')}
+                Total Funds:{' '}
+                {web3?.utils.fromWei(project?.totalFund ?? 0, 'ether')} ETH
               </span>{' '}
-              /<span className="text-gray-800"> Total Goals: {totalGoal}</span>
+              /
+              <span className="text-gray-800">
+                {' '}
+                Total Goals: {totalGoal} ETH
+              </span>
             </p>
           </div>
-          {isContribExpanded ? (<div>
-            <div className="flex items-center gap-3">
-              <p className="font-semibold">ETH</p>
-              <CurrencyInput
-                className="flex h-9 flex-1 rounded-2xl border border-input bg-white px-3 py-1 text-base shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
-                placeholder="Enter your milestone goal here"
-                decimalsLimit={MS_DECIMAL_LIMIT}
-                value={contributionAmount}
-                onValueChange={(value) => {
-                  setContributionAmount(value ?? "");
-                }}
-              />
-              <Button onClick={() => { contributeToProjectMutation.mutate(contributionAmount) }}>Contribute</Button>
+          {isContribExpanded ? (
+            <div>
+              <div className="flex items-center gap-3">
+                <p className="font-semibold">ETH</p>
+                <CurrencyInput
+                  className="flex h-9 flex-1 rounded-2xl border border-input bg-white px-3 py-1 text-base shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+                  placeholder="Enter your contribution amount here"
+                  decimalsLimit={MS_DECIMAL_LIMIT}
+                  value={contributionAmount}
+                  onValueChange={(value) => {
+                    setContributionAmount(value ?? '');
+                  }}
+                />
+                <Button
+                  onClick={() => {
+                    contributeToProjectMutation.mutate(contributionAmount);
+                  }}
+                >
+                  Contribute
+                </Button>
+              </div>
             </div>
-          </div>) : (
-            <Button onClick={() => { setContribExpanded(true) }} className="w-full">Contribute</Button>
+          ) : (
+            <Button
+              onClick={() => {
+                setContribExpanded(true);
+              }}
+              className="w-full"
+            >
+              Contribute
+            </Button>
           )}
         </div>
 
@@ -155,6 +156,6 @@ export const ProjectDetail = () => {
           ))}
         </div>
       </div>
-    </Layout >
+    </Layout>
   );
 };
