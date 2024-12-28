@@ -1,8 +1,4 @@
 import { Layout } from '@/layouts/layout.tsx';
-import { useAuthContext } from '@/context/auth-context.tsx';
-import { useState } from 'react';
-import { contributeToProject, getProjectDetail } from '@/lib/eth/campaign.ts';
-import { useNavigate, useParams } from 'react-router-dom';
 import { Progress } from '@/components/ui/progress.tsx';
 import { Button } from '@/components/ui/button.tsx';
 import { MilestoneCard } from '@/components/projects/milestone-card.tsx';
@@ -11,15 +7,23 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import { toast } from '@/hooks/use-toast';
 import CurrencyInput from 'react-currency-input-field';
 import { MS_DECIMAL_LIMIT } from '@/components/projects/new-project-form';
+import { contributeToProject } from '@/lib/eth/campaignFactory';
+import { ProjectContributionCard } from '@/components/projects/project-contributions-card';
+import { useAuthContext } from '@/context/auth-context';
+import { useNavigate, useParams } from 'react-router-dom';
+import { useState } from 'react';
+import { getProjectContributions, getProjectDetail } from '@/lib/eth/campaign';
 
 export const ProjectDetail = () => {
   const { web3, userAcc, isLoading: isAuthLoading } = useAuthContext();
   const { address } = useParams();
   const [isContribExpanded, setContribExpanded] = useState<boolean>(false);
-  const [contributionAmount, setContributionAmount] = useState<string>('');
+  const [contributionAmount, setContributionAmount] = useState<string>("");
+  const [contributionError, setContributionError] = useState<string>("");
   const navigate = useNavigate();
+
   const {
-    data: project,
+    data: queryData,
     isLoading: loading,
     refetch,
   } = useQuery({
@@ -29,29 +33,41 @@ export const ProjectDetail = () => {
         return null;
       }
       if (web3 && address) {
-        return getProjectDetail(web3, address);
+        const projectDetailPromise = getProjectDetail(web3, address);
+        const projectContributionsPromise = getProjectContributions(web3, address);
+
+        return Promise.all([projectDetailPromise, projectContributionsPromise]);
       }
       navigate('/');
       return null;
     },
   });
 
+  const project = queryData ? queryData[0] : null;
+  const contributions = queryData ? queryData[1].sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime()) : null;
+
   const totalGoal =
     project?.milestones.reduce((acc, milestone) => acc + milestone.goal, 0) ||
     0;
 
   const contributeToProjectMutation = useMutation({
-    mutationFn: async (amount: string) => {
+    mutationFn: async (amountStr: string) => {
       if (web3 && userAcc && address) {
-        await contributeToProject(web3, address, amount, userAcc);
+        await contributeToProject(
+          web3,
+          address,
+          amountStr,
+          userAcc,
+        );
       }
     },
-    onError: (err) => {
+    onError: async (err) => {
       toast({
         variant: 'destructive',
         title: 'Unexpected Error Occurred 😰',
         description: `Error contributing to project: ${err}`,
       });
+      await refetch();
     },
     onSuccess: async () => {
       toast({
@@ -60,8 +76,40 @@ export const ProjectDetail = () => {
       });
       await refetch();
       setContributionAmount('');
+      setContribExpanded(false);
     },
   });
+
+  const onSubmitContribution = async (amountStr: string) => {
+    if (web3 && userAcc && project) {
+      const balanceInWei = await web3.eth.getBalance(userAcc);
+      const balanceInEther = parseFloat(web3.utils.fromWei(balanceInWei, "ether"));
+
+      const parsedAmount = parseFloat(amountStr);
+      if (isNaN(parsedAmount) || !isFinite(parsedAmount)) {
+        setContributionError("Amount not a number");
+        return
+      }
+
+      if (parsedAmount <= 0) {
+        setContributionError("Amount must be greater than 0");
+        return
+      }
+
+      if (balanceInEther < parsedAmount) {
+        setContributionError("Insufficient balance for contribution");
+        return
+      }
+
+      const totalFund = parseFloat(web3.utils.fromWei(project.totalFund, "ether"));
+      if (totalFund + parsedAmount > totalGoal) {
+        setContributionError("Total contributions must not exceed total goal");
+        return
+      }
+
+      contributeToProjectMutation.mutate(amountStr);
+    }
+  }
 
   if (loading || isAuthLoading) {
     return <LoadingPage />;
@@ -124,12 +172,13 @@ export const ProjectDetail = () => {
                 />
                 <Button
                   onClick={() => {
-                    contributeToProjectMutation.mutate(contributionAmount);
+                    onSubmitContribution(contributionAmount);
                   }}
                 >
                   Contribute
                 </Button>
               </div>
+              {contributionError && (<p className='text-sm text-destructive'>{contributionError}</p>)}
             </div>
           ) : (
             <Button
@@ -141,6 +190,11 @@ export const ProjectDetail = () => {
               Contribute
             </Button>
           )}
+          <div className="flex flex-col gap-1 items-stretch">
+            {contributions?.map((contribution) => (
+              <ProjectContributionCard contribution={contribution} />
+            ))}
+          </div>
         </div>
 
         {/* Milestones */}

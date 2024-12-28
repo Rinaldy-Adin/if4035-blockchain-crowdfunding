@@ -5,6 +5,7 @@ import { Home } from '@/pages/home.tsx';
 import { ProjectDetail } from '@/pages/project-detail.tsx';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { NewProjectPage } from '@/pages/project-new.tsx';
+import { ContributionHistory } from './pages/contribution-history.tsx';
 
 function App() {
   const queryClient = new QueryClient();
@@ -13,6 +14,10 @@ function App() {
     {
       path: '/',
       element: <Home />,
+    },
+    {
+      path: '/contributions',
+      element: <ContributionHistory />,
     },
     {
       path: '/project/new',

@@ -1,6 +1,7 @@
 import { Card } from '@/components/ui/card.tsx';
 import { ProjectSummary } from '@/interfaces/project';
 import { Progress } from '@/components/ui/progress.tsx';
+import web3 from 'web3';
 
 export const ProjectCard = ({ project }: { project: ProjectSummary }) => {
   return (

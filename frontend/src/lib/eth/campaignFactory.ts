@@ -1,7 +1,8 @@
-import Web3 from 'web3';
+import Web3, { EventLog } from 'web3';
 import ProjectKickstarterApp from '../../abi/ProjectFactory.abi.json';
-import { ProjectSummary } from '@/interfaces/project';
+import { ContributionHistoryItem, ProjectSummary } from '@/interfaces/project';
 import { getProjectSummary } from '@/lib/eth/campaign.ts';
+import dayjs from 'dayjs';
 
 const FACTORY_ADDRESS = '0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512';
 
@@ -68,4 +69,55 @@ export async function getDeployedProjects(
     console.error('Error fetching deployed projects:', error);
     throw error;
   }
+}
+
+export async function contributeToProject(
+  web3: Web3,
+  projectAddress: string,
+  contributionAmount: string,
+  accountAddress: string | null
+) {
+  if (!accountAddress) {
+    throw new Error('No account address found');
+  }
+
+  if (!projectAddress) {
+    throw new Error('No project address found');
+  }
+
+  const factoryContract = getProjectFactoryContract(web3);
+  const amountInWei = web3.utils.toWei(contributionAmount, 'ether');
+
+  const receipt = await factoryContract.methods
+    .contributeToProject(projectAddress)
+    .send({
+      from: accountAddress,
+      value: amountInWei,
+      gas: '3000000',
+    });
+
+  console.log('Contribution Made');
+  console.log('Transaction Receipt:', receipt);
+}
+
+export async function getUserContributions(
+  web3: Web3,
+  userAddress: string
+): Promise<ContributionHistoryItem[]> {
+  const factoryContract = getProjectFactoryContract(web3);
+
+  // "allEvents" typecast done to ignore error as .getPastEvents has outdated typescript definition
+  const events = (await factoryContract.getPastEvents("ContributionMade" as "allEvents", {
+    filter: { backer: userAddress },
+    fromBlock: 0,
+    toBlock: "latest",
+  })) as EventLog[];
+
+  return events.map((event) => ({
+    projectAddress: event.returnValues.project as string,
+    projectName: event.returnValues.projectName as string,
+    backerAddress: event.returnValues.backer as string,
+    amount: web3.utils.fromWei((event.returnValues.amount as bigint).toString(), "ether"),
+    timestamp: dayjs.unix(Number(event.returnValues.timestamp)).toDate(),
+  }));
 }

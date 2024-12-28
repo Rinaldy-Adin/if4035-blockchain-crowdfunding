@@ -26,3 +26,17 @@ export type ProjectSummary = {
   backersCount: number;
   milestonesCount: number;
 };
+
+export type ContributionHistoryItem = {
+  projectAddress: string;
+  projectName: string;
+  timestamp: Date;
+  backerAddress: string;
+  amount: string;
+};
+
+export type ProjectContributionItem = {
+  backerAddress: string;
+  amount: string;
+  timestamp: Date;
+};
