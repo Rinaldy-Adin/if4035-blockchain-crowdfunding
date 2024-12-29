@@ -1,3 +1,6 @@
+# Kickstarter: Blockchain-based Crowdfunding Platform
+Kickstarter app is a decentralized platform built on a private Ethereum network, designed to provide a secure and transparent way for creators to fund their projects. It utilizes smart contracts to manage project milestones and automate fund disbursement upon verification.
+
 ## Requirements
 
 1. [Kurtosis](https://docs.kurtosis.com/install)
@@ -66,6 +69,9 @@ Remember to change the network to localhost with following config:
 ![Metamask Config.png](./screenshots/metamask-config.png)
 
 Make sure to match the port of the node with the `rpc` port from kurtosis run output.
+
+## Video Demo
+[Kickstarter Demo](https://youtu.be/l0etxoElE9I)
 
 
 
