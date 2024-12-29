@@ -10,7 +10,9 @@ describe("ProjectFactory", function () {
     [owner] = await ethers.getSigners();
 
     // Deploy a new ProjectFactory contract before each test
-    projectFactory = await ProjectFactory.deploy();
+    projectFactory = await ProjectFactory.deploy(
+      "0xb4B46bdAA835F8E4b4d8e208B6559cD267851051"
+    );
   });
 
   it("should create a new project and emit an event", async function () {
