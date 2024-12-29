@@ -4,7 +4,7 @@ import { ContributionHistoryItem, ProjectSummary } from '@/interfaces/project';
 import { getProjectSummary } from '@/lib/eth/campaign.ts';
 import dayjs from 'dayjs';
 
-const FACTORY_ADDRESS = '0x17435ccE3d1B4fA2e5f8A08eD921D57C6762A180';
+const FACTORY_ADDRESS = process.env.VITE_PROJECT_FACTORY_ADDRESS;
 
 export function getProjectFactoryContract(web3: Web3) {
   try {
@@ -107,17 +107,23 @@ export async function getUserContributions(
   const factoryContract = getProjectFactoryContract(web3);
 
   // "allEvents" typecast done to ignore error as .getPastEvents has outdated typescript definition
-  const events = (await factoryContract.getPastEvents("ContributionMade" as "allEvents", {
-    filter: { backer: userAddress },
-    fromBlock: 0,
-    toBlock: "latest",
-  })) as EventLog[];
+  const events = (await factoryContract.getPastEvents(
+    'ContributionMade' as 'allEvents',
+    {
+      filter: { backer: userAddress },
+      fromBlock: 0,
+      toBlock: 'latest',
+    }
+  )) as EventLog[];
 
   return events.map((event) => ({
     projectAddress: event.returnValues.project as string,
     projectName: event.returnValues.projectName as string,
     backerAddress: event.returnValues.backer as string,
-    amount: web3.utils.fromWei((event.returnValues.amount as bigint).toString(), "ether"),
+    amount: web3.utils.fromWei(
+      (event.returnValues.amount as bigint).toString(),
+      'ether'
+    ),
     timestamp: dayjs.unix(Number(event.returnValues.timestamp)).toDate(),
   }));
 }
