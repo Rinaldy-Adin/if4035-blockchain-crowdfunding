@@ -3,8 +3,9 @@ import ProjectKickstarterApp from '../../abi/ProjectFactory.abi.json';
 import { ContributionHistoryItem, ProjectSummary } from '@/interfaces/project';
 import { getProjectSummary } from '@/lib/eth/campaign.ts';
 import dayjs from 'dayjs';
+import { VITE_PROJECT_FACTORY_ADDRESS } from '@/lib/config.ts';
 
-const FACTORY_ADDRESS = process.env.VITE_PROJECT_FACTORY_ADDRESS;
+const FACTORY_ADDRESS = VITE_PROJECT_FACTORY_ADDRESS;
 
 export function getProjectFactoryContract(web3: Web3) {
   try {
