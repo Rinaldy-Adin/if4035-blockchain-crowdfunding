@@ -1,6 +1,7 @@
 import axios from "axios";
 import { ethers } from "hardhat";
 import oracleContractABI from "../abi/Oracle.abi.json";
+import "dotenv/config";
 
 const MAX_RETRIES = 5;
 const SLEEP_TIME = 2000;
@@ -32,7 +33,11 @@ async function requestRandomNumber(): Promise<number> {
 async function main() {
   const [dataProvider] = await ethers.getSigners();
 
-  const oracleContractAddress = "0x5FbDB2315678afecb367f032d93F642f64180aa3";
+  const oracleContractAddress = process.env.ORACLE_ADDRESS;
+
+  if (!oracleContractAddress) {
+    throw new Error("ORACLE_ADDRESS environment variable is required");
+  }
 
   const oracleContract = new ethers.Contract(
     oracleContractAddress,
