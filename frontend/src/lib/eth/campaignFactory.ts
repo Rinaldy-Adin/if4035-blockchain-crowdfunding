@@ -4,7 +4,7 @@ import { ContributionHistoryItem, ProjectSummary } from '@/interfaces/project';
 import { getProjectSummary } from '@/lib/eth/campaign.ts';
 import dayjs from 'dayjs';
 
-const FACTORY_ADDRESS = '0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512';
+const FACTORY_ADDRESS = '0x17435ccE3d1B4fA2e5f8A08eD921D57C6762A180';
 
 export function getProjectFactoryContract(web3: Web3) {
   try {
