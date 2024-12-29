@@ -10,6 +10,14 @@ contract ProjectFactory {
     event ProjectCreated(address campaignAddress, address creator, string name, string description);
     event ContributionMade(address indexed project, string projectName, uint256 timestamp, address indexed backer, uint256 amount);
 
+    address public oracleAddress;
+
+    constructor(
+        address _oracleAddress
+    ) {
+        oracleAddress = _oracleAddress;
+    }
+
     function createProject(
         string memory _name,
         string memory _description,
@@ -25,7 +33,7 @@ contract ProjectFactory {
             "Invalid milestones input"
         );
 
-        Project newProject = new Project(msg.sender, _name, _description, _imageCid, milestoneNames, milestoneDescriptions, milestoneGoals, address(this));
+        Project newProject = new Project(msg.sender, _name, _description, _imageCid, milestoneNames, milestoneDescriptions, milestoneGoals, address(this), oracleAddress);
         deployedProjects.push(address(newProject));
 
         emit ProjectCreated(address(newProject), msg.sender, _name, _description);

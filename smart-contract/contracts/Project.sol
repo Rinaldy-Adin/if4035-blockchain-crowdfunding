@@ -29,8 +29,7 @@ contract Project {
     mapping(uint256 => uint256) public requestToMilestone;
     address[] public backers;
 
-    // Hardcoded oracle address
-    address public oracleAddress = 0x5FbDB2315678afecb367f032d93F642f64180aa3;
+    address public oracleAddress;
     address public factoryAddress;
 
     event ContributionMade(address indexed backer, uint256 amount, uint256 timestamp);
@@ -51,7 +50,8 @@ contract Project {
         string[] memory milestoneNames,
         string[] memory milestoneDescriptions,
         uint256[] memory milestoneGoals,
-        address _factoryAddress
+        address _factoryAddress,
+        address _oracleAddress
     ) {
         require(
             milestoneNames.length > 0 &&
@@ -71,6 +71,7 @@ contract Project {
         description = _description;
         imageCid = _imageCid;
         factoryAddress = _factoryAddress;
+        oracleAddress = _oracleAddress;
 
         for (uint256 i = 0; i < milestoneNames.length; i++) {
             milestones.push(Milestone({
