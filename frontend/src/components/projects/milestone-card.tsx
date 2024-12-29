@@ -10,6 +10,7 @@ import { toast } from '@/hooks/use-toast.ts';
 import { useMemo } from 'react';
 import { CheckIcon, Clock1Icon, FlagIcon } from 'lucide-react';
 import { Badge } from '@/components/ui/badge.tsx';
+import { LoadingIcon } from '@/components/ui/loading-icon.tsx';
 
 interface MilestoneCardProps {
   milestone: Milestone;
@@ -52,7 +53,7 @@ export const MilestoneCard = ({
     onSuccess: () => {
       toast({
         title: 'Success',
-        description: `Milestone ${milestoneIndex} verification requested!`,
+        description: `Milestone ${milestone.name} verification requested!`,
       });
     },
   });
@@ -96,7 +97,11 @@ export const MilestoneCard = ({
       !milestone.verified &&
       !verifyMilestoneMutation.isPending
     );
-  }, [milestone.lastVerificationRequest, milestone.verified]);
+  }, [
+    milestone.lastVerificationRequest,
+    milestone.verified,
+    verifyMilestoneMutation.isPending,
+  ]);
 
   const isWithdrawalAllowed =
     milestone.verified &&
@@ -153,9 +158,14 @@ export const MilestoneCard = ({
               onClick={() => verifyMilestoneMutation.mutate()}
               disabled={!isVerificationAllowed}
             >
-              {verifyMilestoneMutation.isPending
-                ? 'Requesting Verification... 🚀'
-                : 'Request Verification 🚀'}
+              {verifyMilestoneMutation.isPending ? (
+                <div className="flex items-center gap-2">
+                  <LoadingIcon />
+                  Requesting Verification... 🚀
+                </div>
+              ) : (
+                'Request Verification 🚀'
+              )}
             </Button>
             <Button
               variant="secondary"

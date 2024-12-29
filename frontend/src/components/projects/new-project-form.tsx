@@ -23,6 +23,7 @@ import { Badge } from '@/components/ui/badge.tsx';
 import { Separator } from '@/components/ui/separator.tsx';
 import { MilestoneIcon, Text, XIcon } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { LoadingIcon } from '@/components/ui/loading-icon.tsx';
 
 export const MS_DECIMAL_LIMIT = 6;
 
@@ -305,9 +306,14 @@ export default function NewProjectForm() {
           </div>
           <div className="flex w-full justify-end">
             <Button disabled={createProjectMutation.isPending} type="submit">
-              {createProjectMutation.isPending
-                ? 'Kickstarting... 🚀'
-                : 'Kickstart Project'}
+              {createProjectMutation.isPending ? (
+                <div className="flex items-center gap-2">
+                  <LoadingIcon />
+                  Kickstarting... 🚀
+                </div>
+              ) : (
+                'Kickstart Project'
+              )}
             </Button>
           </div>
         </form>

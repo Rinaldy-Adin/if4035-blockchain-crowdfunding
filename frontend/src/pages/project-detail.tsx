@@ -13,13 +13,14 @@ import { useAuthContext } from '@/context/auth-context';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useState } from 'react';
 import { getProjectContributions, getProjectDetail } from '@/lib/eth/campaign';
+import { LoadingIcon } from '@/components/ui/loading-icon.tsx';
 
 export const ProjectDetail = () => {
   const { web3, userAcc, isLoading: isAuthLoading } = useAuthContext();
   const { address } = useParams();
   const [isContribExpanded, setContribExpanded] = useState<boolean>(false);
-  const [contributionAmount, setContributionAmount] = useState<string>("");
-  const [contributionError, setContributionError] = useState<string>("");
+  const [contributionAmount, setContributionAmount] = useState<string>('');
+  const [contributionError, setContributionError] = useState<string>('');
   const navigate = useNavigate();
 
   const {
@@ -34,7 +35,10 @@ export const ProjectDetail = () => {
       }
       if (web3 && address) {
         const projectDetailPromise = getProjectDetail(web3, address);
-        const projectContributionsPromise = getProjectContributions(web3, address);
+        const projectContributionsPromise = getProjectContributions(
+          web3,
+          address
+        );
 
         return Promise.all([projectDetailPromise, projectContributionsPromise]);
       }
@@ -44,7 +48,9 @@ export const ProjectDetail = () => {
   });
 
   const project = queryData ? queryData[0] : null;
-  const contributions = queryData ? queryData[1].sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime()) : null;
+  const contributions = queryData
+    ? queryData[1].sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())
+    : null;
 
   const totalGoal =
     project?.milestones.reduce((acc, milestone) => acc + milestone.goal, 0) ||
@@ -53,12 +59,7 @@ export const ProjectDetail = () => {
   const contributeToProjectMutation = useMutation({
     mutationFn: async (amountStr: string) => {
       if (web3 && userAcc && address) {
-        await contributeToProject(
-          web3,
-          address,
-          amountStr,
-          userAcc,
-        );
+        await contributeToProject(web3, address, amountStr, userAcc);
       }
     },
     onError: async (err) => {
@@ -83,33 +84,37 @@ export const ProjectDetail = () => {
   const onSubmitContribution = async (amountStr: string) => {
     if (web3 && userAcc && project) {
       const balanceInWei = await web3.eth.getBalance(userAcc);
-      const balanceInEther = parseFloat(web3.utils.fromWei(balanceInWei, "ether"));
+      const balanceInEther = parseFloat(
+        web3.utils.fromWei(balanceInWei, 'ether')
+      );
 
       const parsedAmount = parseFloat(amountStr);
       if (isNaN(parsedAmount) || !isFinite(parsedAmount)) {
-        setContributionError("Amount not a number");
-        return
+        setContributionError('Amount not a number');
+        return;
       }
 
       if (parsedAmount <= 0) {
-        setContributionError("Amount must be greater than 0");
-        return
+        setContributionError('Amount must be greater than 0');
+        return;
       }
 
       if (balanceInEther < parsedAmount) {
-        setContributionError("Insufficient balance for contribution");
-        return
+        setContributionError('Insufficient balance for contribution');
+        return;
       }
 
-      const totalFund = parseFloat(web3.utils.fromWei(project.totalFund, "ether"));
+      const totalFund = parseFloat(
+        web3.utils.fromWei(project.totalFund, 'ether')
+      );
       if (totalFund + parsedAmount > totalGoal) {
-        setContributionError("Total contributions must not exceed total goal");
-        return
+        setContributionError('Total contributions must not exceed total goal');
+        return;
       }
 
       contributeToProjectMutation.mutate(amountStr);
     }
-  }
+  };
 
   if (loading || isAuthLoading) {
     return <LoadingPage />;
@@ -178,16 +183,26 @@ export const ProjectDetail = () => {
                   Contribute
                 </Button>
               </div>
-              {contributionError && (<p className='text-sm text-destructive'>{contributionError}</p>)}
+              {contributionError && (
+                <p className="text-sm text-destructive">{contributionError}</p>
+              )}
             </div>
           ) : (
             <Button
               onClick={() => {
                 setContribExpanded(true);
               }}
+              disabled={contributeToProjectMutation.isPending}
               className="w-full"
             >
-              Contribute
+              {contributeToProjectMutation.isPending ? (
+                <div className="flex items-center gap-2">
+                  <LoadingIcon />
+                  Contributing... 🚀
+                </div>
+              ) : (
+                'Contribute'
+              )}
             </Button>
           )}
           <div className="flex flex-col gap-1 items-stretch">
